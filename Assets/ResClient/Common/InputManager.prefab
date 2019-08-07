@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 5193754757818653223}
   - component: {fileID: 9125228339395689615}
   - component: {fileID: 635787147688490726}
-  - component: {fileID: 1871661551}
   - component: {fileID: -28625599509559157}
   - component: {fileID: 5074996284814941685}
   m_Layer: 0
@@ -81,32 +80,6 @@ MonoBehaviour:
   IsExclusive: 0
   MoveTolerance: 0.25
   ApplySameDirectionConstraint: 0
---- !u!114 &1871661551
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3761726284701550462}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c54b79afefd6e0f4aae4a7ab8c6865e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  requiredFingerCount: 1
-  DistanceUnit: 2
-  MaxSimultaneousGestures: 1
-  ResetMode: 0
-  Raycaster: {fileID: 0}
-  ClusterManager: {fileID: 0}
-  Delegate: {fileID: 0}
-  UseSendMessage: 0
-  EventMessageName: OnPinch
-  EventMessageTarget: {fileID: 0}
-  SendMessageToSelection: 0
-  IsExclusive: 0
-  MinDOT: -0.7
-  MinDistance: 0.25
 --- !u!114 &-28625599509559157
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -144,6 +117,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 5193754757818653223}
     m_Modifications:
+    - target: {fileID: 100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
+      propertyPath: m_Name
+      value: FingerGestures
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.9437656
@@ -187,14 +168,6 @@ PrefabInstance:
     - target: {fileID: 400000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
-      propertyPath: m_Name
-      value: FingerGestures
-      objectReference: {fileID: 0}
-    - target: {fileID: 100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}

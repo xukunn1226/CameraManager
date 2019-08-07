@@ -126,22 +126,22 @@
 
 #if !UNITY_5
 
-		public new Collider collider
-		{
-			get { return CachedCollider; }
-		}
-		public new Collider2D collider2D
-		{
-			get { return CachedCollider2D; }
-		}
-		public new Rigidbody rigidbody
-		{
-			get { return CachedRigidBody; }
-		}
-		public new Rigidbody2D rigidbody2D
-		{
-			get { return CachedRigidBody2D; }
-		}
+		//public Collider collider
+		//{
+		//	get { return CachedCollider; }
+		//}
+		//public Collider2D collider2D
+		//{
+		//	get { return CachedCollider2D; }
+		//}
+		//public Rigidbody rigidbody
+		//{
+		//	get { return CachedRigidBody; }
+		//}
+		//public Rigidbody2D rigidbody2D
+		//{
+		//	get { return CachedRigidBody2D; }
+		//}
 		public new GameObject gameObject
 		{
 			get { return CachedGameObject; }
