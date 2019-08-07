@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5193754757818653223}
   - component: {fileID: 9125228339395689615}
   - component: {fileID: 635787147688490726}
-  - component: {fileID: 5213768139589500553}
+  - component: {fileID: 1871661551}
   - component: {fileID: -28625599509559157}
   - component: {fileID: 5074996284814941685}
   m_Layer: 0
@@ -81,7 +81,7 @@ MonoBehaviour:
   IsExclusive: 0
   MoveTolerance: 0.25
   ApplySameDirectionConstraint: 0
---- !u!114 &5213768139589500553
+--- !u!114 &1871661551
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -144,14 +144,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 5193754757818653223}
     m_Modifications:
-    - target: {fileID: 100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
-      propertyPath: m_Name
-      value: FingerGestures
-      objectReference: {fileID: 0}
-    - target: {fileID: 100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.9437656
@@ -195,6 +187,14 @@ PrefabInstance:
     - target: {fileID: 400000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
+      propertyPath: m_Name
+      value: FingerGestures
+      objectReference: {fileID: 0}
+    - target: {fileID: 100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 37a5555c5dd87f44a9c68d7fe462564e, type: 3}
