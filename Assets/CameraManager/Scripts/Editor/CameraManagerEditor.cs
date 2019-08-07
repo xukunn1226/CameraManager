@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace Framework.SCamera
+namespace Framework
 {
-    [CustomEditor(typeof(CameraController))]
+    [CustomEditor(typeof(CameraManager))]
     public class CameraControllerEditor : Editor
     {
-        private CameraController    cc;
+        private CameraManager    cc;
         private SerializedObject    viObject;
 
         private SerializedProperty  rigXProp;
@@ -42,7 +42,7 @@ namespace Framework.SCamera
         
         private void OnEnable()
         {
-            cc = (CameraController)target;
+            cc = (CameraManager)target;
 
             GetViewInfoProperties();
 

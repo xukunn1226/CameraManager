@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Framework.SCamera
+namespace Framework
 {
     [CreateAssetMenu(menuName = "创建相机震屏效果", fileName = "CameraEffectProfile")]
     public class CameraEffectProfile : ScriptableObject

@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 
-namespace Framework.SCamera
+namespace Framework
 {
-    public class CameraController : MonoBehaviour
+    public class CameraManager : MonoBehaviour
     {
-        static public CameraController  Instance
+        static public CameraManager  instance
         {
             get;
             private set;
@@ -19,7 +19,6 @@ namespace Framework.SCamera
         }
 
         private Camera[]                _cameras;                                           // [0]: scene camera; [1]: SceneFx camera
-        //private CinemachineBrain        _brain;
 
         [Space(10)]
         private Vector2                 _dragDelta;                                         // .x表示Yaw；.y表示Pitch
@@ -37,14 +36,6 @@ namespace Framework.SCamera
         public LayerMask                collisionMask;                                      // 镜头碰撞Mask
         public float                    sphereCastRadius                = 0.3f;
         
-        public enum CloseupShotState
-        {
-            Free,
-            Closeup,
-            ExtremeCloseup,
-        }
-        public CloseupShotState         shotState { get; private set; }
-
         private class FViewTarget
         {
             public Transform        viewTarget;
@@ -99,21 +90,9 @@ namespace Framework.SCamera
         private bool                    _bWasUseFixedPitch;
         public bool                     bUseFixedPitch      { get; set; }
 
-        //public CinemachineBrain cinemachineBrain
-        //{
-        //    get
-        //    {
-        //        if(_brain == null)
-        //        {
-        //            _brain = transform.GetComponentInChildren<CinemachineBrain>();
-        //        }
-        //        return _brain;
-        //    }
-        //}
-
         private void Awake()
         {
-            Instance = this;
+            instance = this;
             camTransform = GetComponentInChildren<Camera>().transform;         // 顺序查找到第一个含Camera组件的节点
             //vcTransform = GetComponentInChildren<CinemachineVirtualCamera>();
             _cameras = GetComponentsInChildren<Camera>();
@@ -315,50 +294,7 @@ namespace Framework.SCamera
                 }
             }
         }
-
-        // 同步场景相机参数到特效相机
-        private void SyncSceneToFxCamera()
-        {
-            if(_cameras[0] != null && _cameras[1] != null)
-            {
-                _cameras[1].fieldOfView = _cameras[0].fieldOfView;
-                _cameras[1].nearClipPlane = _cameras[0].nearClipPlane;
-                _cameras[1].farClipPlane = _cameras[0].farClipPlane;
-            }
-        }
-
-        private void UpdateMoveFastCameraEffect()
-        {
-            //if (_moveFastEffectProfile != null && _moveFastEffectProfile.IsPlaying())
-            //{
-            //    _moveFastEffectProfile.UpdateCameraEffect(_cameras[0]);
-
-            //    if (_moveFastEffectProfile.shakePosition.active)
-            //    {
-            //        if (ActorAuthority.instance != null)
-            //        {
-            //            Vector3 worldPos = ActorAuthority.instance.transform.TransformVector(_moveFastEffectProfile.shakePosition.FinalPosition);
-            //            vcTransform.transform.localPosition += transform.InverseTransformVector(worldPos);
-            //        }
-            //        else
-            //        {
-            //            vcTransform.transform.localPosition += _moveFastEffectProfile.shakePosition.FinalPosition;
-            //        }
-            //    }
-
-            //    if (_moveFastEffectProfile.shakeRotation.active)
-            //    {
-            //        vcTransform.transform.localRotation = _moveFastEffectProfile.shakeRotation.FinalRotation;
-            //    }
-
-            //    if (_moveFastEffectProfile.shakeFOV.active)
-            //    {
-            //        vcTransform.m_Lens.FieldOfView = _moveFastEffectProfile.shakeFOV.FinalScaleOfFOV * _curVT.viewInfo.fov;
-            //    }
-            //}
-        }
-
-
+        
         /// <summary>
         /// camera update pipeline
         /// </summary>
@@ -374,10 +310,6 @@ namespace Framework.SCamera
             UpdateCamera();
 
             UpdateCameraEffect();
-
-            UpdateMoveFastCameraEffect();
-            
-            SyncSceneToFxCamera();
         }
 
         private float GetPlatformDragSensitivity()
@@ -447,11 +379,6 @@ namespace Framework.SCamera
         {
             get; private set;
         }
-
-        //public CinemachineVirtualCamera vcTransform
-        //{
-        //    get; private set;
-        //}
 
         static public float NormalizeAngle(float angle)
         {
@@ -534,105 +461,8 @@ namespace Framework.SCamera
             _viewTarget = viewTarget;
 
             SetViewTarget(_viewTarget, _viewInfoProfile.freeView, true, smoothTime);
-
-            shotState = CloseupShotState.Free;
-        }
-
-        /// <summary>
-        /// 切换至自由视角
-        /// </summary>
-        /// <param name="bForce"></param>
-        public void LookPlayerFree(bool bForce = false)
-        {
-            //if (shotState != CloseupShotState.Free || bForce)
-            //    EnterFreeView();
-
-            shotState = CloseupShotState.Free;
-        }
-
-        /// <summary>
-        /// 看向玩家手中八卦盘
-        /// </summary>
-        public void LookBaguapan()
-        {
-            // 保存当前镜头参数
-            SaveCurrentViewTarget();
-            SetViewTarget(_viewTarget, _viewInfoProfile.openGSUIView, true, 0.35f);
-        }
-        public void LookBaguapanFree()
-        {
-            LoadPreviousViewTarget();
         }
         
-        /// <summary>
-        /// NPC对话时看NPC的镜头接口
-        /// </summary>
-        /// <param name="viewTarget"></param>
-        /// <param name="viewInfo"></param>
-        /// <param name="smoothTime"></param>
-        public void DialogViewNPC(Transform viewTarget, CameraViewInfo viewInfo, float smoothTime)
-        {
-            if( viewInfo == null )
-            {
-                Debug.LogError("LookNPC: viewInfo == null");
-                return;
-            }
-
-            // 保存当前镜头参数
-            SaveCurrentViewTarget();
-
-            //if(viewTarget == ActorAuthority.instance && viewInfo == null)
-            { // 使用角色内置的对话视角
-
-            }
-
-            viewInfo.fixedPitch = viewInfo.defaultPitch;
-            SetViewTarget(viewTarget, viewInfo, true, smoothTime);
-        }
-
-        /// <summary>
-        /// NPC对话时看本地角色的镜头接口
-        /// </summary>
-        /// <param name="type">0: 正面看；1：侧面看</param>
-        /// <param name="overrideViewInfo"></param>
-        /// <param name="smoothTime"></param>
-        public void DialogViewPlayer(int type, CameraViewInfo overrideViewInfo, float smoothTime)
-        {
-            //if(overrideViewInfo != null)
-            //{
-            //    overrideViewInfo.fixedPitch = overrideViewInfo.defaultPitch;
-            //    SetViewTarget(ActorAuthority.instance.transform, overrideViewInfo, true, smoothTime);
-            //}
-            //else
-            //{
-            //    SetViewTarget(ActorAuthority.instance.transform, type == 1 ? _viewInfoProfile.dialogSideView : _viewInfoProfile.dialogPositiveView, true, smoothTime);
-            //}
-        }
-
-        /// <summary>
-        /// 离开NPC特写镜头
-        /// </summary>
-        public void LookNPCFree()
-        {
-            // 还原之前镜头
-            LoadPreviousViewTarget();
-        }
-
-        //进入查看邮件
-        public void LookMail()
-        {
-            // 保存当前镜头参数
-            SaveCurrentViewTarget();
-
-            SetViewTarget(_viewTarget, _viewInfoProfile.mailView, true, 0.2f);
-        }
-        //离开查看邮件
-        public void LookMailFree()
-        {
-            // 还原之前镜头
-            LoadPreviousViewTarget(0.2f);
-        }
-
         /// <summary>
         /// 播放震屏接口
         /// </summary>
@@ -662,31 +492,6 @@ namespace Framework.SCamera
                 _effectProfile.Stop(0);
 
                 UpdateCameraEffect();
-            }
-        }
-
-        public void PlayMoveFastCameraEffect(CameraEffectProfile profile, System.Action onFinished = null)
-        {
-            if (profile == null)
-            {
-                Debug.LogWarning("PlayMoveFastCameraEffect: CameraEffectProfile == none");
-                return;
-            }
-
-            if (_moveFastEffectProfile != null && _moveFastEffectProfile.IsPlaying())
-                return;
-            
-            _moveFastEffectProfile = profile;
-            _moveFastEffectProfile.Play(false, onFinished);
-        }
-
-        public void StopMoveFastCameraEffect(float fadeOutTime = 0)
-        {
-            if (_moveFastEffectProfile != null && _moveFastEffectProfile.IsPlaying())
-            {
-                _moveFastEffectProfile.Stop(fadeOutTime);
-
-                UpdateMoveFastCameraEffect();
             }
         }
 

@@ -3,7 +3,7 @@ using System;
 using UnityEditor;
 using System.Diagnostics;
 
-namespace Framework.SCamera
+namespace Framework
 {
     [CustomEditor(typeof(CameraEffectProfile))]
     public class CameraEffectProfileEditor : Editor

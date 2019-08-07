@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Framework.SCamera
+namespace Framework
 {
     [CreateAssetMenu(menuName = "创建相机位数据", fileName = "CameraViewInfo")]
     public class CameraViewInfo : ScriptableObject

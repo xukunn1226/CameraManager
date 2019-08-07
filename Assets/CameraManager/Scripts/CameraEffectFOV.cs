@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Framework.SCamera
+namespace Framework
 {
     [System.Serializable]
     public class CameraEffectFOV : CameraEffectBase

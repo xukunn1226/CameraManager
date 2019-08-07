@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Framework.SCamera
+namespace Framework
 {
     [System.Serializable]
     public class CameraEffectAspect : CameraEffectBase
