@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Framework
 {
-    [CreateAssetMenu(menuName = "创建相机震屏效果", fileName = "CameraEffectProfile")]
-    public class CameraEffectProfile : ScriptableObject
+    [CreateAssetMenu(menuName = "创建相机震屏效果", fileName = "CameraEffectInfo")]
+    public class CameraEffectInfo : ScriptableObject
     {
         [Tooltip("震屏时间")]
         public float                        duration        = 1;

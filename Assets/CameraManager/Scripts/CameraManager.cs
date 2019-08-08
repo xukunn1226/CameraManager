@@ -4,37 +4,27 @@ namespace Framework
 {
     public class CameraManager : MonoBehaviour
     {
-        static public CameraManager  instance
+        static public CameraManager     instance
         {
             get;
             private set;
         }
 
-        public Camera main
-        {
-            get
-            {
-                return _cameras[0];
-            }
-        }
-
-        private Camera[]                _cameras;                                           // [0]: scene camera; [1]: SceneFx camera
+        public Camera                   main                                { get; private set; }
 
         [Space(10)]
-        private Vector2                 _dragDelta;                                         // .x表示Yaw；.y表示Pitch
-        private float                   _pinchDelta;                                        // 
+        private Vector2                 m_DragDelta;                                                // .x表示Yaw；.y表示Pitch
+        private float                   m_PinchDelta;                                               // 
         
-        public float                    dragSensitivityOnMobile         = 3.0f;             // 移动平台上对拖拽时灵敏度的加乘(multiply)
-        public float                    dragSensitivityOnPC             = 0.2f;             // PC平台上对拖拽时灵敏度的加乘(multiply)
+        public float                    m_DragSensitivityOnMobile           = 3.0f;                 // 移动平台上对拖拽时灵敏度的加乘(multiply)
+        public float                    m_DragSensitivityOnPC               = 0.2f;                 // PC平台上对拖拽时灵敏度的加乘(multiply)
 
-        public float                    pinchSensitivityOnMobile        = 1.0f;             // 移动平台上pinch时灵敏度的加乘(multiply)       
-        public float                    pinchSensitivityOnPC            = 0.02f;            // PC平台上pinch时灵敏度的加乘(multiply)       
+        private float                   m_PinchSensitivityOnMobile          = 1.0f;                 // 【暂时屏蔽】移动平台上pinch时灵敏度的加乘(multiply)       
+        private float                   m_PinchSensitivityOnPC              = 0.02f;                // 【暂时屏蔽】PC平台上pinch时灵敏度的加乘(multiply)       
 
-        public float                    smoothTimeToCloseup             = 0.2f;             // 特写镜头过渡参数
-        public float                    smoothTime                      = 0.2f;             // drag，pinch操作的过渡参数
-        public float                    smoothTimeDistance              = 0.2f;
-        public LayerMask                collisionMask;                                      // 镜头碰撞Mask
-        public float                    sphereCastRadius                = 0.3f;
+        public float                    m_SmoothTime                        = 0.2f;                 // drag，pinch操作的过渡参数
+        public LayerMask                m_CollisionMask;                                            // 镜头碰撞Mask
+        public float                    m_SphereCastRadius                  = 0.3f;
         
         private class FViewTarget
         {
@@ -54,73 +44,69 @@ namespace Framework
 
                 if( InViewInfo != null )
                 {
-                    viewInfo = CameraViewInfo.CopyFrom(InViewInfo);
+                    viewInfo.CopyFrom(InViewInfo);
                 }                
             }
         }
-        private FViewTarget             _curVT;
-        private FViewTarget             _pendingVT;
+        private FViewTarget                 m_CurVT;
+        private FViewTarget                 m_PendingVT;
 
-        private bool                    _bTransition;
-        private float                   _smoothTimeToTarget;
+        private bool                        m_bTransition;
+        private float                       m_SmoothTimeToTarget;
 
-        private Vector3                 _rigVelocity;
-        private float                   _fovVelocity;
-        private float                   _disVelocity;
-        private float                   _pitchVelocity;
-        private float                   _yawVelocity;
+        private Vector3                     m_RigVelocity;
+        private float                       m_FovVelocity;
+        private float                       m_DisVelocity;
+        private float                       m_PitchVelocity;
+        private float                       m_YawVelocity;
 
-        private Ray                     _ray                                = new Ray();
-        private RaycastHit[]            _hits                               = new RaycastHit[16];
+        private Ray                         m_Ray                                = new Ray();
+        private RaycastHit[]                m_Hits                               = new RaycastHit[16];
 
-        private CameraEffectProfile     _effectProfile;                     // 震屏效果（技能、轻功时使用）
-        private CameraEffectProfile     _moveFastEffectProfile;             // 脱战疾跑时的镜头效果
+        private CameraEffectInfo            m_EffectInfo;                       // 震屏效果
 
-        private CameraViewInfoProfile   _viewInfoProfile;                   // 主角的镜头组数据
-        private Transform               _viewTarget;                        // 主角
-
-        private FViewTarget             _cachedViewTarget;                  // 进入其他镜头前保存当前的镜头参数
-        private float                   _cachedFOV;
-        private float                   _cachedPitch;
-        private float                   _cachedYaw;
-        private float                   _cachedDistance;
-
-        private float                   _cachedShadowDistance;
-
-        private bool                    _bWasUseFixedPitch;
-        public bool                     bUseFixedPitch      { get; set; }
+        private CameraViewInfoCollection    m_ViewInfoProfile;                  // 当前的镜头组数据
+        private Transform                   m_ViewTarget;                       // 跟随对象
+        
 
         private void Awake()
         {
             instance = this;
-            camTransform = GetComponentInChildren<Camera>().transform;         // 顺序查找到第一个含Camera组件的节点
-            //vcTransform = GetComponentInChildren<CinemachineVirtualCamera>();
-            _cameras = GetComponentsInChildren<Camera>();
+            DontDestroyOnLoad(gameObject);
 
-            _cachedShadowDistance = QualitySettings.shadowDistance;
+            main = GetComponentInChildren<Camera>();
+        }
+
+        private void OnDestroy()
+        {
+            if(instance != null)
+            {
+                Destroy(gameObject);
+                instance = null;
+            }
         }
 
         public void AddCullingMask(int mask)
         {
-            if( _cameras != null && _cameras.Length > 0 )
+            if( main != null )
             {
-                _cameras[0].cullingMask |= mask;
+                main.cullingMask |= mask;
             }
         }
 
         public void RemoveCullingMask(int mask)
         {
-            if (_cameras != null && _cameras.Length > 0)
+            if (main != null)
             {
-                _cameras[0].cullingMask &= ~mask;
+                main.cullingMask &= ~mask;
             }
         }
 
         public void SetClearFlag(CameraClearFlags flag)
         {
-            if (_cameras != null && _cameras.Length > 0)
+            if (main != null)
             {
-                _cameras[0].clearFlags = flag;
+                main.clearFlags = flag;
             }
         }
 
@@ -139,37 +125,37 @@ namespace Framework
                 return;
             }
 
-            if(_curVT == null)
+            if(m_CurVT == null)
             {
-                _curVT      = new FViewTarget(viewTarget,   viewInfo);
-                _pendingVT  = new FViewTarget(viewTarget,   viewInfo);
+                m_CurVT      = new FViewTarget(viewTarget,   viewInfo);
+                m_PendingVT  = new FViewTarget(viewTarget,   viewInfo);
             }
             else
             {
-                _curVT      = new FViewTarget(viewTarget,   _curVT.viewInfo);         // 当前FViewTarget仅改变viewTarget，其他参数保持不变
-                _pendingVT  = new FViewTarget(viewTarget,   viewInfo);
+                m_CurVT      = new FViewTarget(viewTarget,   m_CurVT.viewInfo);         // 当前FViewTarget仅改变viewTarget，其他参数保持不变
+                m_PendingVT  = new FViewTarget(viewTarget,   viewInfo);
             }
 
             // 初始化
             if (bUseDefault)
             {
-                _pendingVT.viewInfo.fov         = _pendingVT.viewInfo.defaultFOV;
-                _pendingVT.viewInfo.pitch       = _pendingVT.viewInfo.defaultPitch;
-                _pendingVT.viewInfo.yaw         = NormalizeAngle((viewTarget != null ? viewTarget.transform.rotation.eulerAngles.y : 0) + _pendingVT.viewInfo.defaultYaw);
-                _pendingVT.viewInfo.distance    = _pendingVT.viewInfo.defaultDistance;
+                m_PendingVT.viewInfo.fov         = m_PendingVT.viewInfo.defaultFOV;
+                m_PendingVT.viewInfo.pitch       = m_PendingVT.viewInfo.defaultPitch;
+                m_PendingVT.viewInfo.yaw         = NormalizeAngle((viewTarget != null ? viewTarget.transform.rotation.eulerAngles.y : 0) + m_PendingVT.viewInfo.defaultYaw);
+                m_PendingVT.viewInfo.distance    = m_PendingVT.viewInfo.defaultDistance;
             }
 
             // 切换目标时重置
-            _rigVelocity = Vector3.zero;
-            _fovVelocity = 0;
-            _pitchVelocity = 0;
-            _yawVelocity = 0;
-            _disVelocity = 0;
+            m_RigVelocity = Vector3.zero;
+            m_FovVelocity = 0;
+            m_PitchVelocity = 0;
+            m_YawVelocity = 0;
+            m_DisVelocity = 0;
 
-            _bTransition = true;
-            _smoothTimeToTarget = smoothTime;
+            m_bTransition = true;
+            m_SmoothTimeToTarget = smoothTime;
 
-            if (_smoothTimeToTarget < 0.0001f)
+            if (m_SmoothTimeToTarget < 0.0001f)
             {
                 UpdateTransition();
             }
@@ -177,70 +163,61 @@ namespace Framework
 
         private void ProcessInput()
         {
-            //_dragDelta = KInput.instance.DragDelta * GetPlatformDragSensitivity();
-            _dragDelta.y *= -1;
+            m_DragDelta = (InputManager.instance != null ? InputManager.instance.DragDelta : Vector2.zero) * GetPlatformDragSensitivity();
+            m_DragDelta.y *= -1;
 
-            //_pinchDelta = KInput.instance.PinchDelta * GetPlatformPinchSensitivity() * -1;
+            m_PinchDelta = 0;
         }
 
         private void UpdateTransition()
         {
-            if (_pendingVT.viewTarget != null)
-                _pendingVT.viewInfo.rig = _pendingVT.viewTarget.position + _pendingVT.viewTarget.TransformVector(_pendingVT.viewInfo.rigOffset);
+            if (m_PendingVT.viewTarget != null)
+                m_PendingVT.viewInfo.rig = m_PendingVT.viewTarget.position + m_PendingVT.viewTarget.TransformVector(m_PendingVT.viewInfo.rigOffset);
             
-            if ( _bTransition )
+            if ( m_bTransition )
             {
-                if( _smoothTimeToTarget <= 0.0001f /*|| _curVT.viewInfo.SmoothDamp(_curVT.viewInfo, _pendingVT.viewInfo, _smoothTimeToTarget)*/ )
+                if( m_SmoothTimeToTarget <= 0.0001f /*|| _curVT.viewInfo.SmoothDamp(_curVT.viewInfo, _pendingVT.viewInfo, _smoothTimeToTarget)*/ )
                 {
-                    _bTransition = false;
-                    _curVT = new FViewTarget(_pendingVT.viewTarget, _pendingVT.viewInfo);
+                    m_bTransition = false;
+                    m_CurVT = new FViewTarget(m_PendingVT.viewTarget, m_PendingVT.viewInfo);
                 }
 
-                if(_bTransition)
+                if(m_bTransition)
                 {
-                    if (bUseFixedPitch)                     // 3D
-                        _pendingVT.viewInfo.pitch = _pendingVT.viewInfo.fixedPitch;
-                    else if (_bWasUseFixedPitch)            // 2.5D -> 3D
-                        _pendingVT.viewInfo.pitch = _pendingVT.viewInfo.defaultPitch;
+                        m_PendingVT.viewInfo.pitch = m_PendingVT.viewInfo.defaultPitch;
 
-                    if(_curVT.viewInfo.SmoothDamp(_curVT.viewInfo, _pendingVT.viewInfo, _smoothTimeToTarget))
+                    if(m_CurVT.viewInfo.SmoothDamp(m_CurVT.viewInfo, m_PendingVT.viewInfo, m_SmoothTimeToTarget))
                     {
-                        _bTransition = false;
-                        _curVT = new FViewTarget(_pendingVT.viewTarget, _pendingVT.viewInfo);
+                        m_bTransition = false;
+                        m_CurVT = new FViewTarget(m_PendingVT.viewTarget, m_PendingVT.viewInfo);
                     }
                 }
             }
             else
             {
-                _curVT.viewInfo.rig = Vector3.SmoothDamp(_curVT.viewInfo.rig, _pendingVT.viewInfo.rig, ref _rigVelocity, 0);
+                m_CurVT.viewInfo.rig = Vector3.SmoothDamp(m_CurVT.viewInfo.rig, m_PendingVT.viewInfo.rig, ref m_RigVelocity, 0);
                 
                 // fov
-                _curVT.viewInfo.fov = Mathf.SmoothDamp(_curVT.viewInfo.fov, _pendingVT.viewInfo.fov, ref _fovVelocity, smoothTime);
+                m_CurVT.viewInfo.fov = Mathf.SmoothDamp(m_CurVT.viewInfo.fov, m_PendingVT.viewInfo.fov, ref m_FovVelocity, m_SmoothTime);
 
                 // distance
-                _pendingVT.viewInfo.distance = Mathf.Clamp(_pendingVT.viewInfo.distance + _pinchDelta, _pendingVT.viewInfo.minDistance, _pendingVT.viewInfo.maxDistance);
-                _curVT.viewInfo.distance = Mathf.SmoothDamp(_curVT.viewInfo.distance, _pendingVT.viewInfo.distance, ref _disVelocity, smoothTimeDistance);
+                m_PendingVT.viewInfo.distance = Mathf.Clamp(m_PendingVT.viewInfo.distance + m_PinchDelta, m_PendingVT.viewInfo.minDistance, m_PendingVT.viewInfo.maxDistance);
+                m_CurVT.viewInfo.distance = Mathf.SmoothDamp(m_CurVT.viewInfo.distance, m_PendingVT.viewInfo.distance, ref m_DisVelocity, m_SmoothTime);
                 
                 // pitch
-                _pendingVT.viewInfo.pitch = NormalizeAngle(Mathf.Clamp(_pendingVT.viewInfo.pitch + _dragDelta.y, _pendingVT.viewInfo.minPitch, _pendingVT.viewInfo.maxPitch));
-                if (bUseFixedPitch)                     // 3D
-                    _pendingVT.viewInfo.pitch = _pendingVT.viewInfo.fixedPitch;
-                else if (_bWasUseFixedPitch)            // 2.5D -> 3D
-                    _pendingVT.viewInfo.pitch = _pendingVT.viewInfo.defaultPitch;
-                _curVT.viewInfo.pitch = NormalizeAngle(Mathf.SmoothDampAngle(_curVT.viewInfo.pitch, _pendingVT.viewInfo.pitch, ref _pitchVelocity, smoothTime));
+                m_PendingVT.viewInfo.pitch = NormalizeAngle(Mathf.Clamp(m_PendingVT.viewInfo.pitch + m_DragDelta.y, m_PendingVT.viewInfo.minPitch, m_PendingVT.viewInfo.maxPitch));
+                m_CurVT.viewInfo.pitch = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.viewInfo.pitch, m_PendingVT.viewInfo.pitch, ref m_PitchVelocity, m_SmoothTime));
 
                 // yaw
-                _pendingVT.viewInfo.yaw = NormalizeAngle(_pendingVT.viewInfo.yaw + _dragDelta.x);
-                _curVT.viewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(_curVT.viewInfo.yaw, _pendingVT.viewInfo.yaw, ref _yawVelocity, smoothTime));
+                m_PendingVT.viewInfo.yaw = NormalizeAngle(m_PendingVT.viewInfo.yaw + m_DragDelta.x);
+                m_CurVT.viewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.viewInfo.yaw, m_PendingVT.viewInfo.yaw, ref m_YawVelocity, m_SmoothTime));
             }
-
-            _bWasUseFixedPitch = bUseFixedPitch;
         }
 
         private void UpdateCamera()
         {
-            transform.position = _curVT.viewInfo.rig;
-            transform.rotation = Quaternion.Euler(_curVT.viewInfo.pitch, _curVT.viewInfo.yaw, 0);
+            transform.position = m_CurVT.viewInfo.rig;
+            transform.rotation = Quaternion.Euler(m_CurVT.viewInfo.pitch, m_CurVT.viewInfo.yaw, 0);
 
             CheckCollision();
 
@@ -250,47 +227,47 @@ namespace Framework
 
         private void CheckCollision()
         {
-            _ray.origin = transform.position;
-            _ray.direction = -transform.forward;
+            m_Ray.origin = transform.position;
+            m_Ray.direction = -transform.forward;
 
-            int count = Physics.SphereCastNonAlloc(_ray, sphereCastRadius, _hits, _curVT.viewInfo.distance, collisionMask, QueryTriggerInteraction.Ignore);
+            int count = Physics.SphereCastNonAlloc(m_Ray, m_SphereCastRadius, m_Hits, m_CurVT.viewInfo.distance, m_CollisionMask, QueryTriggerInteraction.Ignore);
 
             float nearest = Mathf.Infinity;
             int index = -1;
             for (int i = 0; i < count; i++)
             {
-                if (_hits[i].distance < nearest)
+                if (m_Hits[i].distance < nearest)
                 {
-                    nearest = _hits[i].distance;
+                    nearest = m_Hits[i].distance;
                     index = i;
                 }
             }
 
             if( index != -1 )
             {
-                _curVT.viewInfo.distance = _hits[index].distance;
+                m_CurVT.viewInfo.distance = m_Hits[index].distance;
             }
         }
 
         private void UpdateCameraEffect()
         {
-            if( _effectProfile != null && _effectProfile.IsPlaying() )
+            if( m_EffectInfo != null && m_EffectInfo.IsPlaying() )
             {
-                _effectProfile.UpdateCameraEffect(_cameras[0]);
+                m_EffectInfo.UpdateCameraEffect(main);
 
-                if( _effectProfile.shakePosition.active )
+                if( m_EffectInfo.shakePosition.active )
                 {
-                    //vcTransform.transform.localPosition += _effectProfile.shakePosition.FinalPosition;
+                    main.transform.localPosition += m_EffectInfo.shakePosition.FinalPosition;
                 }
 
-                if( _effectProfile.shakeRotation.active )
+                if( m_EffectInfo.shakeRotation.active )
                 {
-                    //vcTransform.transform.localRotation = _effectProfile.shakeRotation.FinalRotation;
+                    main.transform.localRotation = m_EffectInfo.shakeRotation.FinalRotation;
                 }
 
-                if( _effectProfile.shakeFOV.active )
+                if( m_EffectInfo.shakeFOV.active )
                 {
-                    //vcTransform.m_Lens.FieldOfView = _effectProfile.shakeFOV.FinalScaleOfFOV * _curVT.viewInfo.fov;
+                    main.fieldOfView = m_EffectInfo.shakeFOV.FinalScaleOfFOV * m_CurVT.viewInfo.fov;
                 }
             }
         }
@@ -300,7 +277,7 @@ namespace Framework
         /// </summary>
         void LateUpdate()
         {
-            if (_curVT == null)
+            if (m_CurVT == null)
                 return;
 
             ProcessInput();
@@ -315,46 +292,45 @@ namespace Framework
         private float GetPlatformDragSensitivity()
         {
 #if UNITY_EDITOR || UNITY_STANDALONE
-            return dragSensitivityOnPC;
+            return m_DragSensitivityOnPC;
 #else
-            return dragSensitivityOnMobile;
+            return m_DragSensitivityOnMobile;
 #endif
         }
 
         private float GetPlatformPinchSensitivity()
         {
 #if UNITY_EDITOR || UNITY_STANDALONE
-            return pinchSensitivityOnPC;
+            return m_PinchSensitivityOnPC;
 #else
-            return pinchSensitivityOnMobile;
+            return m_PinchSensitivityOnMobile;
 #endif
         }
 
         public Vector3 WorldToViewportPoint(Vector3 position)
         {
-            if( _cameras.Length > 0 )
+            if( main != null )
             {
-                return _cameras[0].WorldToViewportPoint(position);
+                return main.WorldToViewportPoint(position);
             }
             return position;
         }
 
         public Vector3 WorldToScreenPoint(Vector3 position)
         {
-            if(_cameras.Length > 0)
+            if(main != null)
             {
-                return _cameras[0].WorldToScreenPoint(position);
+                return main.WorldToScreenPoint(position);
             }
             return position;
         }
 
         public Ray ScreenPointToRay(Vector2 position)
         {
-            if(_cameras.Length > 0)
+            if(main != null)
             {
-                Camera camera = _cameras[0];
                 Vector2 view = new Vector2(position.x / Screen.width, position.y / Screen.height);
-                return camera.ViewportPointToRay(view);//正龙那边会改rt大小，不能直接用ScreenPointToRay
+                return main.ViewportPointToRay(view);//正龙那边会改rt大小，不能直接用ScreenPointToRay
             }
             return new Ray();
         }
@@ -363,7 +339,7 @@ namespace Framework
         {
             get
             {
-                return camTransform != null ? camTransform.position : transform.position;
+                return main != null ? main.transform.position : transform.position;
             }
         }
 
@@ -371,13 +347,8 @@ namespace Framework
         {
             get
             {
-                return camTransform != null ? camTransform.rotation : transform.rotation;
+                return main != null ? main.transform.rotation : transform.rotation;
             }
-        }
-
-        public Transform camTransform
-        {
-            get; private set;
         }
 
         static public float NormalizeAngle(float angle)
@@ -390,56 +361,7 @@ namespace Framework
                 return angle - 360;
             else
                 return angle;
-        }
-        
-        /// <summary>
-        /// 从当前viewInfo切换至free viewinfo，可选择是否保留当前视角的pitch，yaw
-        /// </summary>
-        /// <param name="bKeepPitch">保持pitch不变</param>
-        /// <param name="bKeepYaw">保持yaw不变</param>
-        private void ReturnToFreeView(bool bKeepPitch, bool bKeepYaw, float smoothTime = 0.2f)
-        {
-            // 仅pitch,yaw保持closeupView,其他数据还原freeView
-            CameraViewInfo newFreeViewInfo = CameraViewInfo.CopyFrom(_viewInfoProfile.freeView);
-
-            if (bKeepPitch)
-                newFreeViewInfo.pitch = _curVT.viewInfo.pitch;
-            if (bKeepYaw)
-                newFreeViewInfo.yaw = _curVT.viewInfo.yaw;
-            newFreeViewInfo.fov = newFreeViewInfo.defaultFOV;
-            newFreeViewInfo.distance = newFreeViewInfo.defaultDistance;
-            SetViewTarget(_viewTarget, newFreeViewInfo, false, smoothTime);
-        }
-
-        private void SaveCurrentViewTarget()
-        {
-            if( _cachedViewTarget == null )
-            {
-                _cachedViewTarget = new FViewTarget(_curVT.viewTarget, _curVT.viewInfo);
-                _cachedFOV = _curVT.viewInfo.fov;
-                _cachedPitch = _curVT.viewInfo.pitch;
-                _cachedYaw = _curVT.viewInfo.yaw;
-                _cachedDistance = _curVT.viewInfo.distance;
-                //_cachedViewTarget.viewInfo.defaultFOV = _curVT.viewInfo.fov;
-                //_cachedViewTarget.viewInfo.defaultPitch = _curVT.viewInfo.pitch;
-                //_cachedViewTarget.viewInfo.defaultYaw = NormalizeAngle(_curVT.viewInfo.yaw - (_curVT.viewTarget != null ? _curVT.viewTarget.transform.rotation.eulerAngles.y : 0));
-                //_cachedViewTarget.viewInfo.defaultDistance = _curVT.viewInfo.distance;
-            }
-        }
-
-        private void LoadPreviousViewTarget(float time = 0)
-        {
-            if(_cachedViewTarget != null )
-            {
-                _cachedViewTarget.viewInfo.fov = _cachedFOV;
-                _cachedViewTarget.viewInfo.pitch = _cachedPitch;
-                _cachedViewTarget.viewInfo.yaw = _cachedYaw;
-                _cachedViewTarget.viewInfo.distance = _cachedDistance;
-                SetViewTarget(_cachedViewTarget.viewTarget, _cachedViewTarget.viewInfo, false, time);
-
-                _cachedViewTarget = null;
-            }
-        }
+        }        
 
         ///////////////////////////////////////////// 镜头切换、震屏等接口
         /// <summary>
@@ -448,7 +370,7 @@ namespace Framework
         /// <param name="viewTarget"></param>
         /// <param name="viewInfoProfile"></param>
         /// <param name="smoothTime"></param>
-        public void LookPlayer(Transform viewTarget, CameraViewInfoProfile viewInfoProfile, float smoothTime)
+        public void LookPlayer(Transform viewTarget, CameraViewInfoCollection viewInfoProfile, float smoothTime)
         {
             if (viewInfoProfile == null)
             {
@@ -457,10 +379,10 @@ namespace Framework
             }
 
             // 记录主角相关数据
-            _viewInfoProfile = CameraViewInfoProfile.CopyFrom(viewInfoProfile);
-            _viewTarget = viewTarget;
+            m_ViewInfoProfile = CameraViewInfoCollection.CopyFrom(viewInfoProfile);
+            m_ViewTarget = viewTarget;
 
-            SetViewTarget(_viewTarget, _viewInfoProfile.freeView, true, smoothTime);
+            //SetViewTarget(m_ViewTarget, m_ViewInfoProfile.freeView, true, smoothTime);
         }
         
         /// <summary>
@@ -468,7 +390,7 @@ namespace Framework
         /// </summary>
         /// <param name="profile"></param>
         /// <param name="onFinished"></param>
-        public void PlayCameraEffect(CameraEffectProfile profile, System.Action onFinished = null)
+        public void PlayCameraEffect(CameraEffectInfo profile, System.Action onFinished = null)
         {
             if (profile == null)
             {
@@ -476,20 +398,20 @@ namespace Framework
                 return;
             }
 
-            if (_effectProfile != null && _effectProfile.IsPlaying() && _effectProfile.priority > profile.priority)
+            if (m_EffectInfo != null && m_EffectInfo.IsPlaying() && m_EffectInfo.priority > profile.priority)
                 return;
 
             StopCameraEffect();
 
-            _effectProfile = profile;
-            _effectProfile.Play(true, onFinished);
+            m_EffectInfo = profile;
+            m_EffectInfo.Play(true, onFinished);
         }
 
         public void StopCameraEffect()
         {
-            if (_effectProfile != null && _effectProfile.IsPlaying())
+            if (m_EffectInfo != null && m_EffectInfo.IsPlaying())
             {
-                _effectProfile.Stop(0);
+                m_EffectInfo.Stop(0);
 
                 UpdateCameraEffect();
             }
@@ -503,18 +425,18 @@ namespace Framework
 
         public void GetViewInfo(out Transform viewTarget, out CameraViewInfo viewInfo)
         {
-            viewTarget = (_pendingVT != null && _pendingVT.viewTarget != null) ? _pendingVT.viewTarget : null;
-            viewInfo = (_pendingVT != null && _pendingVT.viewInfo != null) ? _pendingVT.viewInfo : null;
+            viewTarget = (m_PendingVT != null && m_PendingVT.viewTarget != null) ? m_PendingVT.viewTarget : null;
+            viewInfo = (m_PendingVT != null && m_PendingVT.viewInfo != null) ? m_PendingVT.viewInfo : null;
         }
 
-        public void GetEffectProfile(out CameraEffectProfile profile)
+        public void GetEffectProfile(out CameraEffectInfo profile)
         {
-            profile = _effectProfile;
+            profile = m_EffectInfo;
         }
 
-        public void GetViewInfoProfile(out CameraViewInfoProfile viewInfoProfile)
+        public void GetViewInfoProfile(out CameraViewInfoCollection viewInfoProfile)
         {
-            viewInfoProfile = _viewInfoProfile;
+            viewInfoProfile = m_ViewInfoProfile;
         }
 
         public void SaveToDefault(Transform viewTarget, CameraViewInfo viewInfo)
@@ -536,6 +458,7 @@ namespace Framework
         public string effectProfileAssetPath { get; set; }
 
         public string viewInfoProfileAssetPath { get; set; }
+        public Camera Camera { get => main; set => main = value; }
 #endif
     }
 }

@@ -7,6 +7,7 @@ namespace Framework
     {
         public Vector3  rig             = Vector3.zero;
         public Vector3  rigOffset       = new Vector3(0, 1.8f, 0);
+        public Vector3  rigOffset2      = new Vector3(0, 1.8f, 0);
         private Vector3 rigVelocity;
         private Vector3 rigOffsetVelocity;
 
@@ -18,7 +19,6 @@ namespace Framework
         public float    defaultPitch    = 30;
         public float    minPitch        = -40;
         public float    maxPitch        = 70;
-        public float    fixedPitch      { get; set; }
         private float   pitchVelocity;
 
         public float    yaw             { get; set;}
@@ -32,37 +32,34 @@ namespace Framework
         private float   distanceVelocity;
 
 
-        static public CameraViewInfo CopyFrom(CameraViewInfo InViewInfo)
+        public void CopyFrom(CameraViewInfo InViewInfo)
         {
-            CameraViewInfo viewInfo     = CreateInstance<CameraViewInfo>();
+            rig                = InViewInfo.rig;
+            rigOffset          = InViewInfo.rigOffset;
+            rigOffset2         = InViewInfo.rigOffset2;
 
-            viewInfo.rig                = InViewInfo.rig;
-            viewInfo.rigOffset          = InViewInfo.rigOffset;
+            defaultFOV         = InViewInfo.defaultFOV;
+            fov                = InViewInfo.fov;
 
-            viewInfo.defaultFOV         = InViewInfo.defaultFOV;
-            viewInfo.fov                = InViewInfo.fov;
+            defaultPitch       = InViewInfo.defaultPitch;
+            pitch              = InViewInfo.pitch;
+            minPitch           = InViewInfo.minPitch;
+            maxPitch           = InViewInfo.maxPitch;
 
-            viewInfo.defaultPitch       = InViewInfo.defaultPitch;
-            viewInfo.pitch              = InViewInfo.pitch;
-            viewInfo.minPitch           = InViewInfo.minPitch;
-            viewInfo.maxPitch           = InViewInfo.maxPitch;
-            viewInfo.fixedPitch         = InViewInfo.fixedPitch;
+            defaultYaw         = InViewInfo.defaultYaw;
+            yaw                = InViewInfo.yaw;
 
-            viewInfo.defaultYaw         = InViewInfo.defaultYaw;
-            viewInfo.yaw                = InViewInfo.yaw;
-
-            viewInfo.defaultDistance    = InViewInfo.defaultDistance;
-            viewInfo.distance           = InViewInfo.distance;
-            viewInfo.minDistance        = InViewInfo.minDistance;
-            viewInfo.maxDistance        = InViewInfo.maxDistance;
-
-            return viewInfo;
+            defaultDistance    = InViewInfo.defaultDistance;
+            distance           = InViewInfo.distance;
+            minDistance        = InViewInfo.minDistance;
+            maxDistance        = InViewInfo.maxDistance;
         }
 
         public bool SmoothDamp(CameraViewInfo a, CameraViewInfo b, float smoothTime)
         {
             rig         = Vector3.SmoothDamp(a.rig, b.rig, ref rigVelocity, smoothTime);
             rigOffset   = Vector3.SmoothDamp(a.rigOffset, b.rigOffset, ref rigOffsetVelocity, smoothTime);
+            rigOffset2  = Vector3.SmoothDamp(a.rigOffset2, b.rigOffset2, ref rigOffsetVelocity, smoothTime);
 
             fov         = Mathf.SmoothDamp(a.fov, b.fov, ref fovVelocity, smoothTime);
             distance    = Mathf.SmoothDamp(a.distance, b.distance, ref distanceVelocity, smoothTime);

@@ -37,8 +37,8 @@ namespace Framework
 
         private Transform               viewTarget;
         private CameraViewInfo          viewInfo;
-        private CameraEffectProfile     effectProfile;
-        private CameraViewInfoProfile   viewInfoProfile;
+        private CameraEffectInfo     effectProfile;
+        private CameraViewInfoCollection   viewInfoProfile;
         
         private void OnEnable()
         {
@@ -49,13 +49,13 @@ namespace Framework
             cc.GetEffectProfile(out effectProfile);
             if( effectProfile == null )
             {
-                effectProfile = AssetDatabase.LoadAssetAtPath<CameraEffectProfile>(cc.effectProfileAssetPath);
+                effectProfile = AssetDatabase.LoadAssetAtPath<CameraEffectInfo>(cc.effectProfileAssetPath);
             }
 
             cc.GetViewInfoProfile(out viewInfoProfile);
             if( viewInfoProfile == null )
             {
-                viewInfoProfile = AssetDatabase.LoadAssetAtPath<CameraViewInfoProfile>(cc.viewInfoProfileAssetPath);
+                viewInfoProfile = AssetDatabase.LoadAssetAtPath<CameraViewInfoCollection>(cc.viewInfoProfileAssetPath);
             }
         }
 
@@ -223,7 +223,7 @@ namespace Framework
             {
                 GUILayout.Label("编辑相机位组参数", EGUIStyles.TitleTextStyle);
 
-                viewInfoProfile = (CameraViewInfoProfile)EditorGUILayout.ObjectField("Camera ViewInfo Profile", viewInfoProfile, typeof(CameraViewInfoProfile), true, GUILayout.ExpandWidth(true));
+                viewInfoProfile = (CameraViewInfoCollection)EditorGUILayout.ObjectField("Camera ViewInfo Profile", viewInfoProfile, typeof(CameraViewInfoCollection), true, GUILayout.ExpandWidth(true));
                 EditorGUILayout.LabelField("资源路径：       " + cc.viewInfoProfileAssetPath, GUILayout.ExpandWidth(true));
                 if (viewInfoProfile != null)
                 {
@@ -242,7 +242,7 @@ namespace Framework
                         CameraViewInfo vi = AssetDatabase.LoadAssetAtPath<CameraViewInfo>(cc.assetPath);
                         if (vi != null)
                         {
-                            viewInfoProfile.freeView = vi;
+                            //viewInfoProfile.freeView = vi;
                             EditorUtility.SetDirty(viewInfoProfile);
                             AssetDatabase.SaveAssets();
                             AssetDatabase.Refresh();
@@ -253,7 +253,7 @@ namespace Framework
                         CameraViewInfo vi = AssetDatabase.LoadAssetAtPath<CameraViewInfo>(cc.assetPath);
                         if (vi != null)
                         {
-                            viewInfoProfile.closeupView = vi;
+                            //viewInfoProfile.closeupView = vi;
                             EditorUtility.SetDirty(viewInfoProfile);
                             AssetDatabase.SaveAssets();
                             AssetDatabase.Refresh();
@@ -264,7 +264,7 @@ namespace Framework
                         CameraViewInfo vi = AssetDatabase.LoadAssetAtPath<CameraViewInfo>(cc.assetPath);
                         if (vi != null)
                         {
-                            viewInfoProfile.extremeCloseupView = vi;
+                            //viewInfoProfile.extremeCloseupView = vi;
                             EditorUtility.SetDirty(viewInfoProfile);
                             AssetDatabase.SaveAssets();
                             AssetDatabase.Refresh();
@@ -285,7 +285,7 @@ namespace Framework
                 GUILayout.Label("编辑相机震屏", EGUIStyles.TitleTextStyle);
 
                 ////// CameraEffectProfile
-                effectProfile = (CameraEffectProfile)EditorGUILayout.ObjectField("CameraEffect Profile", effectProfile, typeof(CameraEffectProfile), true, GUILayout.ExpandWidth(true));
+                effectProfile = (CameraEffectInfo)EditorGUILayout.ObjectField("CameraEffect Profile", effectProfile, typeof(CameraEffectInfo), true, GUILayout.ExpandWidth(true));
                 EditorGUILayout.LabelField("资源路径：       " + cc.effectProfileAssetPath, GUILayout.ExpandWidth(true));
                 if (effectProfile != null)
                 {
@@ -303,12 +303,12 @@ namespace Framework
                 {
                     if (effectProfile != null)
                     {
-                        CameraEffectProfile ep;
+                        CameraEffectInfo ep;
                         cc.GetEffectProfile(out ep);
 
                         if( ep == null || !CanSave(ep) )
                         {
-                            ep = Object.Instantiate<CameraEffectProfile>(effectProfile);
+                            ep = Object.Instantiate<CameraEffectInfo>(effectProfile);
                         }
                         effectProfile = ep;
 

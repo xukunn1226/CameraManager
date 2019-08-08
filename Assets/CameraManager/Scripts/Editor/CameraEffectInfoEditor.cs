@@ -5,8 +5,8 @@ using System.Diagnostics;
 
 namespace Framework
 {
-    [CustomEditor(typeof(CameraEffectProfile))]
-    public class CameraEffectProfileEditor : Editor
+    [CustomEditor(typeof(CameraEffectInfo))]
+    public class CameraEffectInfoEditor : Editor
     {
         //        private SerializedProperty durationProp;
 

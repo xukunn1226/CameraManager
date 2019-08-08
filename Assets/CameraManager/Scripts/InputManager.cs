@@ -41,6 +41,15 @@ namespace Framework
             //gameObject.GetComponent<PinchRecognizer>().OnGesture += OnPinch;
         }
 
+        private void OnDestroy()
+        {
+            if(instance != null)
+            {
+                Destroy(gameObject);
+                instance = null;
+            }
+        }
+
         private bool IsOverUI(Vector3 pos)
         {
             return false;
