@@ -28,24 +28,19 @@ namespace Framework
         
         private class FViewTarget
         {
-            public Transform        viewTarget;
-            public CameraViewInfo   viewInfo;
+            public Transform            m_ViewTarget;
+            public CameraViewInfo       m_ViewInfo;
 
-            public FViewTarget(Transform InViewTarget, CameraViewInfo InViewInfo)
+            public FViewTarget()
             {
-                viewTarget = InViewTarget;
+                m_ViewInfo = ScriptableObject.CreateInstance<CameraViewInfo>();
+            }
 
-                if( InViewInfo == null && viewInfo == null )
-                { // 创建默认数据
-                    viewInfo = ScriptableObject.CreateInstance<CameraViewInfo>();
-                    Debug.LogWarning("FViewTarget:: InViewInfo == null");
-                    return;
-                }
+            public void InitViewTarget(Transform InViewTarget, CameraViewInfo InViewInfo)
+            {
+                m_ViewTarget = InViewTarget;
 
-                if( InViewInfo != null )
-                {
-                    viewInfo.CopyFrom(InViewInfo);
-                }                
+                m_ViewInfo.Init(InViewTarget, InViewInfo);
             }
         }
         private FViewTarget                 m_CurVT;
@@ -65,7 +60,7 @@ namespace Framework
 
         private CameraEffectInfo            m_EffectInfo;                       // 震屏效果
 
-        private CameraViewInfoCollection    m_ViewInfoProfile;                  // 当前的镜头组数据
+        private CameraViewInfoCollection    m_ViewInfoCollection;               // 当前的镜头组数据
         private Transform                   m_ViewTarget;                       // 跟随对象
         
 
@@ -75,6 +70,8 @@ namespace Framework
             DontDestroyOnLoad(gameObject);
 
             main = GetComponentInChildren<Camera>();
+            m_CurVT = new FViewTarget();
+            m_PendingVT = new FViewTarget();
         }
 
         private void OnDestroy()
@@ -111,56 +108,69 @@ namespace Framework
         }
 
         /// <summary>
-        /// 切换目标位，底层接口，不涉及状态
+        /// 上层接口，初始化角色默认视角
         /// </summary>
-        /// <param name="viewTarget"></param>
-        /// <param name="viewInfoProfile"></param>
-        /// <param name="bUseDefault">初始视角（fov，pitch，yaw，distance）是否使用默认参数</param>
-        /// <param name="smoothTime"></param>
-        private void SetViewTarget(Transform viewTarget, CameraViewInfo viewInfo, bool bUseDefault = true, float smoothTime = 0.2f)
+        /// <param name="InViewTarget"></param>
+        /// <param name="InViewInfoCollection"></param>
+        public void InitViewInfoCollection(Transform InViewTarget, CameraViewInfoCollection InViewInfoCollection)
         {
-            if( viewInfo == null )
+            if (InViewTarget == null || InViewInfoCollection == null)
             {
-                Debug.LogError("SetViewTarget: viewInfo == null");
+                Debug.LogError("Camera Init: viewTarget == null || viewInfoProfile == null");
                 return;
             }
 
-            if(m_CurVT == null)
-            {
-                m_CurVT      = new FViewTarget(viewTarget,   viewInfo);
-                m_PendingVT  = new FViewTarget(viewTarget,   viewInfo);
-            }
-            else
-            {
-                m_CurVT      = new FViewTarget(viewTarget,   m_CurVT.viewInfo);         // 当前FViewTarget仅改变viewTarget，其他参数保持不变
-                m_PendingVT  = new FViewTarget(viewTarget,   viewInfo);
-            }
+            m_ViewInfoCollection = InViewInfoCollection;
+            m_ViewTarget = InViewTarget;
 
-            // 初始化
-            if (bUseDefault)
-            {
-                m_PendingVT.viewInfo.fov         = m_PendingVT.viewInfo.defaultFOV;
-                m_PendingVT.viewInfo.pitch       = m_PendingVT.viewInfo.defaultPitch;
-                m_PendingVT.viewInfo.yaw         = NormalizeAngle((viewTarget != null ? viewTarget.transform.rotation.eulerAngles.y : 0) + m_PendingVT.viewInfo.defaultYaw);
-                m_PendingVT.viewInfo.distance    = m_PendingVT.viewInfo.defaultDistance;
-            }
+            InitViewInfo(m_ViewTarget, m_ViewInfoCollection.m_RunView);
+        }
 
-            // 切换目标时重置
+        /// <summary>
+        /// 上层接口，常规相机位的切换，根据需求pitch、yaw、distance维持不变
+        /// </summary>
+        /// <param name="InViewInfo"></param>
+        /// <param name="smoothTime"></param>
+        public void ChangeViewInfo(CameraViewInfo InViewInfo, float smoothTime = 0.2f)
+        {
+            SetPendingViewInfo(m_ViewTarget, InViewInfo, smoothTime);
+
+            // procedural view info, 继承当前pitch，yaw，distance
+            m_PendingVT.m_ViewInfo.pitch = m_CurVT.m_ViewInfo.pitch;
+            m_PendingVT.m_ViewInfo.yaw = m_CurVT.m_ViewInfo.yaw;
+            m_PendingVT.m_ViewInfo.distance = m_CurVT.m_ViewInfo.distance;
+        }
+
+        /// <summary>
+        /// 底层接口，初始化相机视角参数
+        /// </summary>
+        /// <param name="InViewTarget"></param>
+        /// <param name="InViewInfo"></param>
+        private void InitViewInfo(Transform InViewTarget, CameraViewInfo InViewInfo)
+        {
+            m_CurVT.InitViewTarget(InViewTarget, InViewInfo);
+
+            SetPendingViewInfo(InViewTarget, InViewInfo, 0);
+        }
+
+        /// <summary>
+        /// 底层接口，设置下一个相机视角参数
+        /// </summary>
+        /// <param name="InViewTarget"></param>
+        /// <param name="InViewInfo"></param>
+        /// <param name="smoothTime"></param>
+        private void SetPendingViewInfo(Transform InViewTarget, CameraViewInfo InViewInfo, float smoothTime = 0.2f)
+        {
+            m_PendingVT.InitViewTarget(InViewTarget, InViewInfo);
+
             m_RigVelocity = Vector3.zero;
             m_FovVelocity = 0;
             m_PitchVelocity = 0;
             m_YawVelocity = 0;
             m_DisVelocity = 0;
-
-            m_bTransition = true;
-            m_SmoothTimeToTarget = smoothTime;
-
-            if (m_SmoothTimeToTarget < 0.0001f)
-            {
-                UpdateTransition();
-            }
+            m_SmoothTime = smoothTime;
         }
-
+        
         private void ProcessInput()
         {
             m_DragDelta = (InputManager.instance != null ? InputManager.instance.DragDelta : Vector2.zero) * GetPlatformDragSensitivity();
@@ -169,55 +179,55 @@ namespace Framework
             m_PinchDelta = 0;
         }
 
-        private void UpdateTransition()
+        private void UpdateViewTarget()
         {
-            if (m_PendingVT.viewTarget != null)
-                m_PendingVT.viewInfo.rig = m_PendingVT.viewTarget.position + m_PendingVT.viewTarget.TransformVector(m_PendingVT.viewInfo.rigOffset);
+            if (m_PendingVT.m_ViewTarget != null)
+                m_PendingVT.m_ViewInfo.rig = m_PendingVT.m_ViewTarget.position + m_PendingVT.m_ViewTarget.TransformVector(m_PendingVT.m_ViewInfo.rigOffset);
             
             if ( m_bTransition )
             {
                 if( m_SmoothTimeToTarget <= 0.0001f /*|| _curVT.viewInfo.SmoothDamp(_curVT.viewInfo, _pendingVT.viewInfo, _smoothTimeToTarget)*/ )
                 {
                     m_bTransition = false;
-                    m_CurVT = new FViewTarget(m_PendingVT.viewTarget, m_PendingVT.viewInfo);
+                    //m_CurVT = new FViewTarget(m_PendingVT.viewTarget, m_PendingVT.viewInfo);
                 }
 
                 if(m_bTransition)
                 {
-                        m_PendingVT.viewInfo.pitch = m_PendingVT.viewInfo.defaultPitch;
+                        m_PendingVT.m_ViewInfo.pitch = m_PendingVT.m_ViewInfo.defaultPitch;
 
-                    if(m_CurVT.viewInfo.SmoothDamp(m_CurVT.viewInfo, m_PendingVT.viewInfo, m_SmoothTimeToTarget))
+                    if(m_CurVT.m_ViewInfo.SmoothDamp(m_CurVT.m_ViewInfo, m_PendingVT.m_ViewInfo, m_SmoothTimeToTarget))
                     {
                         m_bTransition = false;
-                        m_CurVT = new FViewTarget(m_PendingVT.viewTarget, m_PendingVT.viewInfo);
+                        //m_CurVT = new FViewTarget(m_PendingVT.viewTarget, m_PendingVT.viewInfo);
                     }
                 }
             }
             else
             {
-                m_CurVT.viewInfo.rig = Vector3.SmoothDamp(m_CurVT.viewInfo.rig, m_PendingVT.viewInfo.rig, ref m_RigVelocity, 0);
+                m_CurVT.m_ViewInfo.rig = Vector3.SmoothDamp(m_CurVT.m_ViewInfo.rig, m_PendingVT.m_ViewInfo.rig, ref m_RigVelocity, 0);
                 
                 // fov
-                m_CurVT.viewInfo.fov = Mathf.SmoothDamp(m_CurVT.viewInfo.fov, m_PendingVT.viewInfo.fov, ref m_FovVelocity, m_SmoothTime);
+                m_CurVT.m_ViewInfo.fov = Mathf.SmoothDamp(m_CurVT.m_ViewInfo.fov, m_PendingVT.m_ViewInfo.fov, ref m_FovVelocity, m_SmoothTime);
 
                 // distance
-                m_PendingVT.viewInfo.distance = Mathf.Clamp(m_PendingVT.viewInfo.distance + m_PinchDelta, m_PendingVT.viewInfo.minDistance, m_PendingVT.viewInfo.maxDistance);
-                m_CurVT.viewInfo.distance = Mathf.SmoothDamp(m_CurVT.viewInfo.distance, m_PendingVT.viewInfo.distance, ref m_DisVelocity, m_SmoothTime);
+                m_PendingVT.m_ViewInfo.distance = Mathf.Clamp(m_PendingVT.m_ViewInfo.distance + m_PinchDelta, m_PendingVT.m_ViewInfo.minDistance, m_PendingVT.m_ViewInfo.maxDistance);
+                m_CurVT.m_ViewInfo.distance = Mathf.SmoothDamp(m_CurVT.m_ViewInfo.distance, m_PendingVT.m_ViewInfo.distance, ref m_DisVelocity, m_SmoothTime);
                 
                 // pitch
-                m_PendingVT.viewInfo.pitch = NormalizeAngle(Mathf.Clamp(m_PendingVT.viewInfo.pitch + m_DragDelta.y, m_PendingVT.viewInfo.minPitch, m_PendingVT.viewInfo.maxPitch));
-                m_CurVT.viewInfo.pitch = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.viewInfo.pitch, m_PendingVT.viewInfo.pitch, ref m_PitchVelocity, m_SmoothTime));
+                m_PendingVT.m_ViewInfo.pitch = NormalizeAngle(Mathf.Clamp(m_PendingVT.m_ViewInfo.pitch + m_DragDelta.y, m_PendingVT.m_ViewInfo.minPitch, m_PendingVT.m_ViewInfo.maxPitch));
+                m_CurVT.m_ViewInfo.pitch = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.pitch, m_PendingVT.m_ViewInfo.pitch, ref m_PitchVelocity, m_SmoothTime));
 
                 // yaw
-                m_PendingVT.viewInfo.yaw = NormalizeAngle(m_PendingVT.viewInfo.yaw + m_DragDelta.x);
-                m_CurVT.viewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.viewInfo.yaw, m_PendingVT.viewInfo.yaw, ref m_YawVelocity, m_SmoothTime));
+                m_PendingVT.m_ViewInfo.yaw = NormalizeAngle(m_PendingVT.m_ViewInfo.yaw + m_DragDelta.x);
+                m_CurVT.m_ViewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.yaw, m_PendingVT.m_ViewInfo.yaw, ref m_YawVelocity, m_SmoothTime));
             }
         }
 
         private void UpdateCamera()
         {
-            transform.position = m_CurVT.viewInfo.rig;
-            transform.rotation = Quaternion.Euler(m_CurVT.viewInfo.pitch, m_CurVT.viewInfo.yaw, 0);
+            transform.position = m_CurVT.m_ViewInfo.rig;
+            transform.rotation = Quaternion.Euler(m_CurVT.m_ViewInfo.pitch, m_CurVT.m_ViewInfo.yaw, 0);
 
             CheckCollision();
 
@@ -230,7 +240,7 @@ namespace Framework
             m_Ray.origin = transform.position;
             m_Ray.direction = -transform.forward;
 
-            int count = Physics.SphereCastNonAlloc(m_Ray, m_SphereCastRadius, m_Hits, m_CurVT.viewInfo.distance, m_CollisionMask, QueryTriggerInteraction.Ignore);
+            int count = Physics.SphereCastNonAlloc(m_Ray, m_SphereCastRadius, m_Hits, m_CurVT.m_ViewInfo.distance, m_CollisionMask, QueryTriggerInteraction.Ignore);
 
             float nearest = Mathf.Infinity;
             int index = -1;
@@ -245,7 +255,7 @@ namespace Framework
 
             if( index != -1 )
             {
-                m_CurVT.viewInfo.distance = m_Hits[index].distance;
+                m_CurVT.m_ViewInfo.distance = m_Hits[index].distance;
             }
         }
 
@@ -267,7 +277,7 @@ namespace Framework
 
                 if( m_EffectInfo.shakeFOV.active )
                 {
-                    main.fieldOfView = m_EffectInfo.shakeFOV.FinalScaleOfFOV * m_CurVT.viewInfo.fov;
+                    main.fieldOfView = m_EffectInfo.shakeFOV.FinalScaleOfFOV * m_CurVT.m_ViewInfo.fov;
                 }
             }
         }
@@ -282,7 +292,7 @@ namespace Framework
 
             ProcessInput();
 
-            UpdateTransition();
+            UpdateViewTarget();
 
             UpdateCamera();
 
@@ -363,28 +373,7 @@ namespace Framework
                 return angle;
         }        
 
-        ///////////////////////////////////////////// 镜头切换、震屏等接口
-        /// <summary>
-        /// 朝向主角
-        /// </summary>
-        /// <param name="viewTarget"></param>
-        /// <param name="viewInfoProfile"></param>
-        /// <param name="smoothTime"></param>
-        public void LookPlayer(Transform viewTarget, CameraViewInfoCollection viewInfoProfile, float smoothTime)
-        {
-            if (viewInfoProfile == null)
-            {
-                Debug.LogError("SetViewTarget: viewInfoProfile == null");
-                return;
-            }
-
-            // 记录主角相关数据
-            m_ViewInfoProfile = CameraViewInfoCollection.CopyFrom(viewInfoProfile);
-            m_ViewTarget = viewTarget;
-
-            //SetViewTarget(m_ViewTarget, m_ViewInfoProfile.freeView, true, smoothTime);
-        }
-        
+        ///////////////////////////////////////////// 镜头切换、震屏等接口       
         /// <summary>
         /// 播放震屏接口
         /// </summary>
@@ -420,13 +409,13 @@ namespace Framework
 #if UNITY_EDITOR
         public void EditorSetViewTarget(Transform viewTarget, CameraViewInfo viewInfo, float smoothTime)
         {
-            SetViewTarget(viewTarget, viewInfo, true, smoothTime);
+            //SetViewTarget(viewTarget, viewInfo, smoothTime);
         }
 
         public void GetViewInfo(out Transform viewTarget, out CameraViewInfo viewInfo)
         {
-            viewTarget = (m_PendingVT != null && m_PendingVT.viewTarget != null) ? m_PendingVT.viewTarget : null;
-            viewInfo = (m_PendingVT != null && m_PendingVT.viewInfo != null) ? m_PendingVT.viewInfo : null;
+            viewTarget = (m_PendingVT != null && m_PendingVT.m_ViewTarget != null) ? m_PendingVT.m_ViewTarget : null;
+            viewInfo = (m_PendingVT != null && m_PendingVT.m_ViewInfo != null) ? m_PendingVT.m_ViewInfo : null;
         }
 
         public void GetEffectProfile(out CameraEffectInfo profile)
@@ -436,7 +425,7 @@ namespace Framework
 
         public void GetViewInfoProfile(out CameraViewInfoCollection viewInfoProfile)
         {
-            viewInfoProfile = m_ViewInfoProfile;
+            viewInfoProfile = m_ViewInfoCollection;
         }
 
         public void SaveToDefault(Transform viewTarget, CameraViewInfo viewInfo)
