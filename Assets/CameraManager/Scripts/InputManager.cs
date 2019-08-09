@@ -20,10 +20,14 @@ namespace Framework
 
         public Vector2              DragDelta       { get; private set; }
         public float                PinchDelta      { get; private set; }
-        public float                JoystickAngle   = INVALID_ANGLE;           // 摇杆产生的角度
+
+        public float                JoystickAngle   = INVALID_ANGLE;            // 摇杆产生的角度
         public bool                 JoystickUse     { get { return JoystickAngle != INVALID_ANGLE; } }
 
-        private bool                m_Pinch;
+        public Vector2              JoystickXYAngle;                            // 遥感在XY方向上的偏移值
+        public bool                 JoystickXYUse   { get { return JoystickXYAngle != Vector2.zero; } }
+
+        private bool                m_Pinch;                                    // 是否触发Pinch操作
 
         // 同时支持两个OnDrag操作，记录他们的状态
         private int                 m_FingerIndex1  = -1;
@@ -194,11 +198,17 @@ namespace Framework
             {
                 int x = -(A ? 1 : 0) + (D ? 1 : 0);
                 int y = -(S ? 1 : 0) + (W ? 1 : 0);
-                JoystickAngle = Mathf.Atan2(x, y) * 180f / Mathf.PI;
+
+                //JoystickAngle = Mathf.Atan2(x, y) * 180f / Mathf.PI;
+
+                JoystickXYAngle.x = x;
+                JoystickXYAngle.y = y;
             }
             else
             {
-                JoystickAngle = INVALID_ANGLE;
+                //JoystickAngle = INVALID_ANGLE;
+
+                JoystickXYAngle = Vector2.zero;
             }
         }
     #endif

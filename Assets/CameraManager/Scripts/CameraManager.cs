@@ -4,32 +4,36 @@ namespace Framework
 {
     public class CameraManager : MonoBehaviour
     {
-        static public CameraManager     instance
+        public delegate void EventHandler();
+        public event EventHandler           OnPostUpdate;                                               // Update之后，LateUpdate之前的回调，可以获取到相机的最新朝向
+
+        static public CameraManager         instance
         {
             get;
             private set;
         }
 
-        public Camera                   main                                { get; private set; }
+        public Camera                       main                                { get; private set; }
 
         [Space(10)]
-        private Vector2                 m_DragDelta;                                                // .x表示Yaw；.y表示Pitch
-        private float                   m_PinchDelta;                                               // 
+        private Vector2                     m_DragDelta;                                                // .x表示Yaw；.y表示Pitch
+        private float                       m_PinchDelta;                                               // 
         
-        public float                    m_DragSensitivityOnMobile           = 3.0f;                 // 移动平台上对拖拽时灵敏度的加乘(multiply)
-        public float                    m_DragSensitivityOnPC               = 0.2f;                 // PC平台上对拖拽时灵敏度的加乘(multiply)
+        public float                        m_DragSensitivityOnMobile           = 3.0f;                 // 移动平台上对拖拽时灵敏度的加乘(multiply)
+        public float                        m_DragSensitivityOnPC               = 0.2f;                 // PC平台上对拖拽时灵敏度的加乘(multiply)
 
-        private float                   m_PinchSensitivityOnMobile          = 1.0f;                 // 【暂时屏蔽】移动平台上pinch时灵敏度的加乘(multiply)       
-        private float                   m_PinchSensitivityOnPC              = 0.02f;                // 【暂时屏蔽】PC平台上pinch时灵敏度的加乘(multiply)       
+        private float                       m_PinchSensitivityOnMobile          = 1.0f;                 // 【暂时屏蔽】移动平台上pinch时灵敏度的加乘(multiply)       
+        private float                       m_PinchSensitivityOnPC              = 0.02f;                // 【暂时屏蔽】PC平台上pinch时灵敏度的加乘(multiply)       
 
-        public float                    m_SmoothTime                        = 0.2f;                 // drag，pinch操作的过渡参数
-        public LayerMask                m_CollisionMask;                                            // 镜头碰撞Mask
-        public float                    m_SphereCastRadius                  = 0.3f;
+        private float                       m_SmoothTime                        = 0.15f;                // 平滑参数，持续影响fov、distance
+        private float                       m_RigSmoothTime;                                            // 仅rig发生变化时起作用，过渡结束置0
+        public LayerMask                    m_CollisionMask;                                            // 镜头碰撞Mask
+        public float                        m_SphereCastRadius                  = 0.3f;
         
         private class FViewTarget
         {
-            public Transform            m_ViewTarget;
-            public CameraViewInfo       m_ViewInfo;
+            public Transform                m_ViewTarget;
+            public CameraViewInfo           m_ViewInfo;
 
             public FViewTarget()
             {
@@ -46,22 +50,18 @@ namespace Framework
         private FViewTarget                 m_CurVT;
         private FViewTarget                 m_PendingVT;
 
-        private bool                        m_bTransition;
-        private float                       m_SmoothTimeToTarget;
-
         private Vector3                     m_RigVelocity;
         private float                       m_FovVelocity;
         private float                       m_DisVelocity;
-        private float                       m_PitchVelocity;
-        private float                       m_YawVelocity;
+        //private float                       m_PitchVelocity;
+        //private float                       m_YawVelocity;
 
-        private Ray                         m_Ray                                = new Ray();
-        private RaycastHit[]                m_Hits                               = new RaycastHit[16];
+        private Ray                         m_Ray                               = new Ray();
+        private RaycastHit[]                m_Hits                              = new RaycastHit[16];
 
-        private CameraEffectInfo            m_EffectInfo;                       // 震屏效果
-
-        private CameraViewInfoCollection    m_ViewInfoCollection;               // 当前的镜头组数据
-        private Transform                   m_ViewTarget;                       // 跟随对象
+        private CameraViewInfoCollection    m_ViewInfoCollection;                                       // 当前的镜头组数据
+        private Transform                   m_ViewTarget;                                               // 跟随对象
+        private CameraEffectInfo            m_EffectInfo;                                               // 震屏效果
         
 
         private void Awake()
@@ -99,14 +99,6 @@ namespace Framework
             }
         }
 
-        public void SetClearFlag(CameraClearFlags flag)
-        {
-            if (main != null)
-            {
-                main.clearFlags = flag;
-            }
-        }
-
         /// <summary>
         /// 上层接口，初始化角色默认视角
         /// </summary>
@@ -126,14 +118,51 @@ namespace Framework
             InitViewInfo(m_ViewTarget, m_ViewInfoCollection.m_RunView);
         }
 
+        public enum ConventionalView
+        {
+            Walk,
+            Run,
+            Sprint,
+            Squat,
+            Roll,
+            Jump,
+            Fly,
+        }
+
         /// <summary>
-        /// 上层接口，常规相机位的切换，根据需求pitch、yaw、distance维持不变
+        /// 常规相机位的切换，根据需求pitch、yaw、distance维持不变
         /// </summary>
         /// <param name="InViewInfo"></param>
         /// <param name="smoothTime"></param>
-        public void ChangeViewInfo(CameraViewInfo InViewInfo, float smoothTime = 0.2f)
+        public void ChangeConventionalViewInfo(ConventionalView view, float smoothTime = 0.15f)
         {
-            SetPendingViewInfo(m_ViewTarget, InViewInfo, smoothTime);
+            CameraViewInfo viewInfo = m_ViewInfoCollection.m_RunView;
+            switch(view)
+            {
+                case ConventionalView.Walk:
+                    viewInfo = m_ViewInfoCollection.m_WalkView;
+                    break;
+                case ConventionalView.Run:
+                    viewInfo = m_ViewInfoCollection.m_RunView;
+                    break;
+                case ConventionalView.Sprint:
+                    viewInfo = m_ViewInfoCollection.m_SprintView;
+                    break;
+                case ConventionalView.Squat:
+                    viewInfo = m_ViewInfoCollection.m_SquatView;
+                    break;
+                case ConventionalView.Roll:
+                    viewInfo = m_ViewInfoCollection.m_RollView;
+                    break;
+                case ConventionalView.Jump:
+                    viewInfo = m_ViewInfoCollection.m_JumpView;
+                    break;
+                case ConventionalView.Fly:
+                    viewInfo = m_ViewInfoCollection.m_FlyView;
+                    break;
+            }
+
+            SetPendingViewInfo(m_ViewTarget, viewInfo, smoothTime);
 
             // procedural view info, 继承当前pitch，yaw，distance
             m_PendingVT.m_ViewInfo.pitch = m_CurVT.m_ViewInfo.pitch;
@@ -159,68 +188,100 @@ namespace Framework
         /// <param name="InViewTarget"></param>
         /// <param name="InViewInfo"></param>
         /// <param name="smoothTime"></param>
-        private void SetPendingViewInfo(Transform InViewTarget, CameraViewInfo InViewInfo, float smoothTime = 0.2f)
+        private void SetPendingViewInfo(Transform InViewTarget, CameraViewInfo InViewInfo, float smoothTime = 0.15f)
         {
             m_PendingVT.InitViewTarget(InViewTarget, InViewInfo);
 
             m_RigVelocity = Vector3.zero;
             m_FovVelocity = 0;
-            m_PitchVelocity = 0;
-            m_YawVelocity = 0;
+            //m_PitchVelocity = 0;
+            //m_YawVelocity = 0;
             m_DisVelocity = 0;
             m_SmoothTime = smoothTime;
+            m_RigSmoothTime = smoothTime;
         }
         
+        private void Update()
+        {
+            ProcessInput();
+
+            UpdateViewInfoExceptRig();
+
+            OnPostUpdate?.Invoke();
+        }
+
+        /// <summary>
+        /// camera update pipeline
+        /// </summary>
+        void LateUpdate()
+        {
+            UpdateRigViewInfo();
+
+            UpdateCamera();
+
+            //UpdateCameraEffect();
+        }
+
         private void ProcessInput()
         {
             m_DragDelta = (InputManager.instance != null ? InputManager.instance.DragDelta : Vector2.zero) * GetPlatformDragSensitivity();
             m_DragDelta.y *= -1;
 
-            m_PinchDelta = 0;
+            m_PinchDelta = (InputManager.instance != null ? InputManager.instance.PinchDelta : 0) * GetPlatformPinchSensitivity();
         }
 
-        private void UpdateViewTarget()
+        // 更新除rig之外的其他相机属性
+        private void UpdateViewInfoExceptRig()
         {
-            if (m_PendingVT.m_ViewTarget != null)
-                m_PendingVT.m_ViewInfo.rig = m_PendingVT.m_ViewTarget.position + m_PendingVT.m_ViewTarget.TransformVector(m_PendingVT.m_ViewInfo.rigOffset);
-            
-            if ( m_bTransition )
+            // Update m_PendingVT
             {
-                if( m_SmoothTimeToTarget <= 0.0001f /*|| _curVT.viewInfo.SmoothDamp(_curVT.viewInfo, _pendingVT.viewInfo, _smoothTimeToTarget)*/ )
-                {
-                    m_bTransition = false;
-                    //m_CurVT = new FViewTarget(m_PendingVT.viewTarget, m_PendingVT.viewInfo);
-                }
+                // distance
+                m_PendingVT.m_ViewInfo.distance = Mathf.Clamp(m_PendingVT.m_ViewInfo.distance + m_PinchDelta, m_PendingVT.m_ViewInfo.minDistance, m_PendingVT.m_ViewInfo.maxDistance);
 
-                if(m_bTransition)
-                {
-                        m_PendingVT.m_ViewInfo.pitch = m_PendingVT.m_ViewInfo.defaultPitch;
+                // pitch
+                m_PendingVT.m_ViewInfo.pitch = NormalizeAngle(Mathf.Clamp(m_PendingVT.m_ViewInfo.pitch + m_DragDelta.y, m_PendingVT.m_ViewInfo.minPitch, m_PendingVT.m_ViewInfo.maxPitch));
 
-                    if(m_CurVT.m_ViewInfo.SmoothDamp(m_CurVT.m_ViewInfo, m_PendingVT.m_ViewInfo, m_SmoothTimeToTarget))
-                    {
-                        m_bTransition = false;
-                        //m_CurVT = new FViewTarget(m_PendingVT.viewTarget, m_PendingVT.viewInfo);
-                    }
-                }
+                // yaw
+                m_PendingVT.m_ViewInfo.yaw = NormalizeAngle(m_PendingVT.m_ViewInfo.yaw + m_DragDelta.x);
             }
-            else
+
+            // Update m_CurVT
             {
-                m_CurVT.m_ViewInfo.rig = Vector3.SmoothDamp(m_CurVT.m_ViewInfo.rig, m_PendingVT.m_ViewInfo.rig, ref m_RigVelocity, 0);
-                
                 // fov
                 m_CurVT.m_ViewInfo.fov = Mathf.SmoothDamp(m_CurVT.m_ViewInfo.fov, m_PendingVT.m_ViewInfo.fov, ref m_FovVelocity, m_SmoothTime);
 
                 // distance
-                m_PendingVT.m_ViewInfo.distance = Mathf.Clamp(m_PendingVT.m_ViewInfo.distance + m_PinchDelta, m_PendingVT.m_ViewInfo.minDistance, m_PendingVT.m_ViewInfo.maxDistance);
                 m_CurVT.m_ViewInfo.distance = Mathf.SmoothDamp(m_CurVT.m_ViewInfo.distance, m_PendingVT.m_ViewInfo.distance, ref m_DisVelocity, m_SmoothTime);
-                
+
                 // pitch
-                m_PendingVT.m_ViewInfo.pitch = NormalizeAngle(Mathf.Clamp(m_PendingVT.m_ViewInfo.pitch + m_DragDelta.y, m_PendingVT.m_ViewInfo.minPitch, m_PendingVT.m_ViewInfo.maxPitch));
-                m_CurVT.m_ViewInfo.pitch = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.pitch, m_PendingVT.m_ViewInfo.pitch, ref m_PitchVelocity, m_SmoothTime));
+                //m_CurVT.m_ViewInfo.pitch = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.pitch, m_PendingVT.m_ViewInfo.pitch, ref m_PitchVelocity, m_SmoothTime));
+                m_CurVT.m_ViewInfo.pitch = NormalizeAngle(m_PendingVT.m_ViewInfo.pitch);        // 优化，FPS不考虑缓动效果
 
                 // yaw
-                m_PendingVT.m_ViewInfo.yaw = NormalizeAngle(m_PendingVT.m_ViewInfo.yaw + m_DragDelta.x);
-                m_CurVT.m_ViewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.yaw, m_PendingVT.m_ViewInfo.yaw, ref m_YawVelocity, m_SmoothTime));
+                //m_CurVT.m_ViewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.yaw, m_PendingVT.m_ViewInfo.yaw, ref m_YawVelocity, m_SmoothTime));
+                m_CurVT.m_ViewInfo.yaw = NormalizeAngle(m_PendingVT.m_ViewInfo.yaw);            // 优化，FPS不考虑缓动效果
+            }
+        }
+
+        // FPS游戏是先转动角色，在根据角色朝向确定rig，故rig延后更新
+        private void UpdateRigViewInfo()
+        {
+            if(m_RigSmoothTime < 0.0001f)
+            {
+                m_CurVT.m_ViewInfo.rigOffset = m_PendingVT.m_ViewInfo.rigOffset;
+            }
+            else
+            {
+                m_CurVT.m_ViewInfo.rigOffset = Vector3.SmoothDamp(m_CurVT.m_ViewInfo.rigOffset, m_PendingVT.m_ViewInfo.rigOffset, ref m_RigVelocity, m_RigSmoothTime);
+                if (m_RigVelocity.sqrMagnitude < 0.0001f)
+                {
+                    m_RigSmoothTime = 0;
+                }
+            }
+
+            if (m_CurVT.m_ViewTarget != null)
+            {
+                m_CurVT.m_ViewInfo.rig = m_CurVT.m_ViewTarget.position + m_CurVT.m_ViewTarget.TransformVector(m_CurVT.m_ViewInfo.rigOffset);
             }
         }
 
@@ -231,8 +292,8 @@ namespace Framework
 
             CheckCollision();
 
-            //vcTransform.transform.localPosition = Vector3.forward * _curVT.viewInfo.distance * -1;
-            //vcTransform.m_Lens.FieldOfView = _curVT.viewInfo.fov;
+            main.transform.localPosition = Vector3.forward * m_CurVT.m_ViewInfo.distance * -1;
+            main.fieldOfView = m_CurVT.m_ViewInfo.fov;
         }
 
         private void CheckCollision()
@@ -282,23 +343,6 @@ namespace Framework
             }
         }
         
-        /// <summary>
-        /// camera update pipeline
-        /// </summary>
-        void LateUpdate()
-        {
-            if (m_CurVT == null)
-                return;
-
-            ProcessInput();
-
-            UpdateViewTarget();
-
-            UpdateCamera();
-
-            UpdateCameraEffect();
-        }
-
         private float GetPlatformDragSensitivity()
         {
 #if UNITY_EDITOR || UNITY_STANDALONE
@@ -353,11 +397,19 @@ namespace Framework
             }
         }
 
-        public Quaternion rotation
+        //public Quaternion rotation
+        //{
+        //    get
+        //    {
+        //        return main != null ? main.transform.rotation : transform.rotation;
+        //    }
+        //}
+
+        public Vector3 eulerAngles
         {
             get
             {
-                return main != null ? main.transform.rotation : transform.rotation;
+                return new Vector3(m_CurVT.m_ViewInfo.pitch, m_CurVT.m_ViewInfo.yaw, 0);
             }
         }
 

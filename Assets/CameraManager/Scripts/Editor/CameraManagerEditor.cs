@@ -171,9 +171,9 @@ namespace Framework
                     EditorGUILayout.LabelField("rig", GUILayout.ExpandWidth(false));
                     {
                         ++EditorGUI.indentLevel;
-                        EditorGUILayout.DelayedFloatField(rigXProp, GUILayout.ExpandWidth(true));
-                        EditorGUILayout.DelayedFloatField(rigYProp, GUILayout.ExpandWidth(true));
-                        EditorGUILayout.DelayedFloatField(rigZProp, GUILayout.ExpandWidth(true));
+                        //EditorGUILayout.DelayedFloatField(rigXProp, GUILayout.ExpandWidth(true));
+                        //EditorGUILayout.DelayedFloatField(rigYProp, GUILayout.ExpandWidth(true));
+                        //EditorGUILayout.DelayedFloatField(rigZProp, GUILayout.ExpandWidth(true));
                         --EditorGUI.indentLevel;
                     }
 

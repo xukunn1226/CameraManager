@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d44bd00bf606bca4e8da2c3990cf6f2b, type: 3}
+  m_Name: CameraViewInfoCollection
+  m_EditorClassIdentifier: 
+  m_WalkView: {fileID: 11400000, guid: c3b075b46dd42f94f95eba287ec1a1d3, type: 2}
+  m_RunView: {fileID: 11400000, guid: 9b18b13da39f3f64785de4bc094e8f24, type: 2}
+  m_SprintView: {fileID: 11400000, guid: e691f3a7b99036e40be717f71e787d6c, type: 2}
+  m_SquatView: {fileID: 11400000, guid: 665f26aada72d2d4e94e2d8bab01f8f2, type: 2}
+  m_RollView: {fileID: 11400000, guid: 5423d4eeea47d83459c36e5844b9c899, type: 2}
+  m_JumpView: {fileID: 11400000, guid: 36e6808e80682ce448b5050ac6fae116, type: 2}
+  m_FlyView: {fileID: 11400000, guid: 61219cc2b984c1f479c11af079531540, type: 2}
