@@ -7,6 +7,17 @@ namespace Framework
         public delegate void EventHandler();
         public event EventHandler           OnPostUpdate;                                               // Update之后，LateUpdate之前的回调，可以获取到相机的最新朝向
 
+        public enum CharacterView
+        {
+            Walk,
+            Run,
+            Sprint,
+            Squat,
+            Roll,
+            Jump,
+            Fly,
+        }
+
         static public CameraManager         instance
         {
             get;
@@ -62,7 +73,6 @@ namespace Framework
         private CameraViewInfoCollection    m_ViewInfoCollection;                                       // 当前的镜头组数据
         private Transform                   m_ViewTarget;                                               // 跟随对象
         private CameraEffectInfo            m_EffectInfo;                                               // 震屏效果
-        
 
         private void Awake()
         {
@@ -81,93 +91,6 @@ namespace Framework
                 Destroy(gameObject);
                 instance = null;
             }
-        }
-
-        public void AddCullingMask(int mask)
-        {
-            if( main != null )
-            {
-                main.cullingMask |= mask;
-            }
-        }
-
-        public void RemoveCullingMask(int mask)
-        {
-            if (main != null)
-            {
-                main.cullingMask &= ~mask;
-            }
-        }
-
-        /// <summary>
-        /// 上层接口，初始化角色默认视角
-        /// </summary>
-        /// <param name="InViewTarget"></param>
-        /// <param name="InViewInfoCollection"></param>
-        public void InitViewInfoCollection(Transform InViewTarget, CameraViewInfoCollection InViewInfoCollection)
-        {
-            if (InViewTarget == null || InViewInfoCollection == null)
-            {
-                Debug.LogError("Camera Init: viewTarget == null || viewInfoProfile == null");
-                return;
-            }
-
-            m_ViewInfoCollection = InViewInfoCollection;
-            m_ViewTarget = InViewTarget;
-
-            InitViewInfo(m_ViewTarget, m_ViewInfoCollection.m_RunView);
-        }
-
-        public enum ConventionalView
-        {
-            Walk,
-            Run,
-            Sprint,
-            Squat,
-            Roll,
-            Jump,
-            Fly,
-        }
-
-        /// <summary>
-        /// 常规相机位的切换，根据需求pitch、yaw、distance维持不变
-        /// </summary>
-        /// <param name="InViewInfo"></param>
-        /// <param name="smoothTime"></param>
-        public void ChangeConventionalViewInfo(ConventionalView view, float smoothTime = 0.15f)
-        {
-            CameraViewInfo viewInfo = m_ViewInfoCollection.m_RunView;
-            switch(view)
-            {
-                case ConventionalView.Walk:
-                    viewInfo = m_ViewInfoCollection.m_WalkView;
-                    break;
-                case ConventionalView.Run:
-                    viewInfo = m_ViewInfoCollection.m_RunView;
-                    break;
-                case ConventionalView.Sprint:
-                    viewInfo = m_ViewInfoCollection.m_SprintView;
-                    break;
-                case ConventionalView.Squat:
-                    viewInfo = m_ViewInfoCollection.m_SquatView;
-                    break;
-                case ConventionalView.Roll:
-                    viewInfo = m_ViewInfoCollection.m_RollView;
-                    break;
-                case ConventionalView.Jump:
-                    viewInfo = m_ViewInfoCollection.m_JumpView;
-                    break;
-                case ConventionalView.Fly:
-                    viewInfo = m_ViewInfoCollection.m_FlyView;
-                    break;
-            }
-
-            SetPendingViewInfo(m_ViewTarget, viewInfo, smoothTime);
-
-            // procedural view info, 继承当前pitch，yaw，distance
-            m_PendingVT.m_ViewInfo.pitch = m_CurVT.m_ViewInfo.pitch;
-            m_PendingVT.m_ViewInfo.yaw = m_CurVT.m_ViewInfo.yaw;
-            m_PendingVT.m_ViewInfo.distance = m_CurVT.m_ViewInfo.distance;
         }
 
         /// <summary>
@@ -200,7 +123,80 @@ namespace Framework
             m_SmoothTime = smoothTime;
             m_RigSmoothTime = smoothTime;
         }
-        
+
+        private CameraViewInfo GetViewInfo(CharacterView view)
+        {
+            if (m_ViewInfoCollection == null)
+                return null;
+
+            CameraViewInfo viewInfo = m_ViewInfoCollection.m_RunView;
+            switch (view)
+            {
+                case CharacterView.Walk:
+                    viewInfo = m_ViewInfoCollection.m_WalkView;
+                    break;
+                case CharacterView.Run:
+                    viewInfo = m_ViewInfoCollection.m_RunView;
+                    break;
+                case CharacterView.Sprint:
+                    viewInfo = m_ViewInfoCollection.m_SprintView;
+                    break;
+                case CharacterView.Squat:
+                    viewInfo = m_ViewInfoCollection.m_SquatView;
+                    break;
+                case CharacterView.Roll:
+                    viewInfo = m_ViewInfoCollection.m_RollView;
+                    break;
+                case CharacterView.Jump:
+                    viewInfo = m_ViewInfoCollection.m_JumpView;
+                    break;
+                case CharacterView.Fly:
+                    viewInfo = m_ViewInfoCollection.m_FlyView;
+                    break;
+            }
+            return viewInfo;
+        }
+
+        /// <summary>
+        /// 上层接口，初始化角色默认视角
+        /// </summary>
+        /// <param name="InViewTarget"></param>
+        /// <param name="InViewInfoCollection"></param>
+        public void InitViewInfoCollection(Transform InViewTarget, CameraViewInfoCollection InViewInfoCollection, CharacterView defaultView = CharacterView.Run)
+        {
+            if (InViewTarget == null || InViewInfoCollection == null)
+            {
+                Debug.LogError("Camera Init: viewTarget == null || viewInfoProfile == null");
+                return;
+            }
+
+            m_ViewInfoCollection = InViewInfoCollection;
+            m_ViewTarget = InViewTarget;
+
+            InitViewInfo(m_ViewTarget, GetViewInfo(defaultView));
+        }
+
+
+        /// <summary>
+        /// 常规相机位的切换，根据需求pitch、yaw、distance维持不变
+        /// </summary>
+        /// <param name="InViewInfo"></param>
+        /// <param name="smoothTime"></param>
+        public void SetCharacterView(CharacterView view, bool isAiming = false, float smoothTime = 0.15f)
+        {
+            SetPendingViewInfo(m_ViewTarget, GetViewInfo(view), smoothTime);
+
+            // procedural view info, 继承当前pitch，yaw，distance
+            m_PendingVT.m_ViewInfo.pitch = m_CurVT.m_ViewInfo.pitch;
+            m_PendingVT.m_ViewInfo.yaw = m_CurVT.m_ViewInfo.yaw;
+            m_PendingVT.m_ViewInfo.distance = m_CurVT.m_ViewInfo.distance;
+
+            if(isAiming)
+            {
+                m_PendingVT.m_ViewInfo.rigOffset = m_PendingVT.m_ViewInfo.rigOffsetWhenAim;
+            }
+        }
+
         private void Update()
         {
             ProcessInput();
@@ -290,13 +286,11 @@ namespace Framework
             transform.position = m_CurVT.m_ViewInfo.rig;
             transform.rotation = Quaternion.Euler(m_CurVT.m_ViewInfo.pitch, m_CurVT.m_ViewInfo.yaw, 0);
 
-            CheckCollision();
-
-            main.transform.localPosition = Vector3.forward * m_CurVT.m_ViewInfo.distance * -1;
+            main.transform.localPosition = Vector3.forward * CheckCollision() * -1;
             main.fieldOfView = m_CurVT.m_ViewInfo.fov;
         }
 
-        private void CheckCollision()
+        private float CheckCollision()
         {
             m_Ray.origin = transform.position;
             m_Ray.direction = -transform.forward;
@@ -314,10 +308,7 @@ namespace Framework
                 }
             }
 
-            if( index != -1 )
-            {
-                m_CurVT.m_ViewInfo.distance = m_Hits[index].distance;
-            }
+            return index != -1 ? m_Hits[index].distance : m_CurVT.m_ViewInfo.distance;
         }
 
         private void UpdateCameraEffect()
@@ -359,6 +350,22 @@ namespace Framework
 #else
             return m_PinchSensitivityOnMobile;
 #endif
+        }
+
+        public void AddCullingMask(int mask)
+        {
+            if (main != null)
+            {
+                main.cullingMask |= mask;
+            }
+        }
+
+        public void RemoveCullingMask(int mask)
+        {
+            if (main != null)
+            {
+                main.cullingMask &= ~mask;
+            }
         }
 
         public Vector3 WorldToViewportPoint(Vector3 position)

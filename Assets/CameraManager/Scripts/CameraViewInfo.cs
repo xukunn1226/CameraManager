@@ -48,7 +48,7 @@ namespace Framework
         /// 仅复制静态数据
         /// </summary>
         /// <param name="InViewInfo"></param>
-        public void CopyFrom(CameraViewInfo InViewInfo)
+        private void CopyFrom(CameraViewInfo InViewInfo)
         {
             rigOffset          = InViewInfo.rigOffset;
             rigOffsetWhenAim   = InViewInfo.rigOffsetWhenAim;

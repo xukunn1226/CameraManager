@@ -8,6 +8,8 @@ public class DebugCamera : MonoBehaviour
     public GameObject m_Player;
     public CameraViewInfoCollection m_Collection;
 
+    private bool m_isAiming;
+
     private void Start()
     {
         CameraManager.instance.InitViewInfoCollection(m_Player.transform, m_Collection);
@@ -50,33 +52,38 @@ public class DebugCamera : MonoBehaviour
 
     private void LateUpdate()
     {
-        if(Input.GetKey(KeyCode.Alpha1))
+        if(Input.GetKeyDown(KeyCode.Alpha1))
         {
-            CameraManager.instance.ChangeConventionalViewInfo(CameraManager.ConventionalView.Walk);
+            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Walk, m_isAiming);
         }
-        if (Input.GetKey(KeyCode.Alpha2))
+        if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            CameraManager.instance.ChangeConventionalViewInfo(CameraManager.ConventionalView.Run);
+            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Run, m_isAiming);
         }
-        if (Input.GetKey(KeyCode.Alpha3))
+        if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            CameraManager.instance.ChangeConventionalViewInfo(CameraManager.ConventionalView.Sprint);
+            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Sprint, m_isAiming);
         }
-        if (Input.GetKey(KeyCode.Alpha4))
+        if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            CameraManager.instance.ChangeConventionalViewInfo(CameraManager.ConventionalView.Squat);
+            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Squat, m_isAiming);
         }
-        if (Input.GetKey(KeyCode.Alpha5))
+        if (Input.GetKeyDown(KeyCode.Alpha5))
         {
-            CameraManager.instance.ChangeConventionalViewInfo(CameraManager.ConventionalView.Roll);
+            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Roll, m_isAiming);
         }
-        if (Input.GetKey(KeyCode.Alpha6))
+        if (Input.GetKeyDown(KeyCode.Alpha6))
         {
-            CameraManager.instance.ChangeConventionalViewInfo(CameraManager.ConventionalView.Jump);
+            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Jump, m_isAiming);
         }
-        if (Input.GetKey(KeyCode.Alpha7))
+        if (Input.GetKeyDown(KeyCode.Alpha7))
         {
-            CameraManager.instance.ChangeConventionalViewInfo(CameraManager.ConventionalView.Fly);
+            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Fly, m_isAiming);
+        }
+        if(Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Return))
+        {
+            m_isAiming = !m_isAiming;
+            Debug.LogFormat("m_isAiming: {0}", m_isAiming);
         }
     }
 }
