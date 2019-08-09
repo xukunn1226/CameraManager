@@ -404,19 +404,28 @@ namespace Framework
             }
         }
 
-        //public Quaternion rotation
-        //{
-        //    get
-        //    {
-        //        return main != null ? main.transform.rotation : transform.rotation;
-        //    }
-        //}
+        public Quaternion rotation
+        {
+            get
+            {
+                return Quaternion.Euler(m_CurVT.m_ViewInfo.pitch, m_CurVT.m_ViewInfo.yaw, 0);
+            }
+        }
 
         public Vector3 eulerAngles
         {
             get
             {
                 return new Vector3(m_CurVT.m_ViewInfo.pitch, m_CurVT.m_ViewInfo.yaw, 0);
+            }
+        }
+
+        public Vector3 direction
+        {
+            get
+            {
+                float radian = m_CurVT.m_ViewInfo.yaw * Mathf.Deg2Rad;
+                return new Vector3(Mathf.Sin(radian), 0, Mathf.Cos(radian));
             }
         }
 
