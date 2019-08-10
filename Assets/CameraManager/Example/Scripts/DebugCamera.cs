@@ -8,12 +8,14 @@ public class DebugCamera : MonoBehaviour
     public GameObject m_Player;
     public CameraViewInfoCollection m_Collection;
 
-    private bool m_isAiming;
+    private bool m_isAiming;            // C && Return控制开启
+    private bool m_isWatching;          // T && Return控制开启
 
     private void Start()
     {
         CameraManager.instance.InitViewInfoCollection(m_Player.transform, m_Collection);
 
+        InputManager.instance.gameObject.GetComponent<DragRecognizer>().OnGesture += OnDrag;
         CameraManager.instance.OnPostUpdate += UpdatePlayerRotation;
     }
 
@@ -23,9 +25,9 @@ public class DebugCamera : MonoBehaviour
             CameraManager.instance.OnPostUpdate -= UpdatePlayerRotation;
     }
 
-    void UpdatePlayerRotation()
+    void UpdatePlayerRotation(bool isWatching)
     {
-        if(m_Player != null)
+        if(m_Player != null && !isWatching)
         {
             Vector3 eulerAngles = CameraManager.instance.eulerAngles;
             eulerAngles.x = 0;
@@ -33,6 +35,25 @@ public class DebugCamera : MonoBehaviour
         }
     }
 
+    private void OnDrag(DragGesture gesture)
+    {
+        if(!m_isWatching)
+        {
+            return;
+        }
+
+        switch(gesture.Phase)
+        {
+            case ContinuousGesturePhase.Started:
+            case ContinuousGesturePhase.Updated:
+                CameraManager.instance.ProcessInputWhenWatching(gesture.DeltaMove);
+                break;
+            case ContinuousGesturePhase.Ended:
+                CameraManager.instance.EndWatching(0.5f);
+                break;
+        }
+    }
+    
     // Update is called once per frame
     void Update()
     {
@@ -80,10 +101,16 @@ public class DebugCamera : MonoBehaviour
         {
             CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Fly, m_isAiming);
         }
-        if(Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Return))
+        if(Input.GetKey(KeyCode.C) && Input.GetKeyDown(KeyCode.Return))
         {
             m_isAiming = !m_isAiming;
             Debug.LogFormat("m_isAiming: {0}", m_isAiming);
+        }
+        if (Input.GetKey(KeyCode.T) && Input.GetKeyDown(KeyCode.Return))
+        {
+            m_isWatching = true;
+            CameraManager.instance.BeginWatching();
+            Debug.LogFormat("m_isWatching: {0}", m_isWatching);
         }
     }
 }

@@ -4,7 +4,7 @@ namespace Framework
 {
     public class CameraManager : MonoBehaviour
     {
-        public delegate void EventHandler();
+        public delegate void EventHandler(bool isWatching);
         public event EventHandler           OnPostUpdate;                                               // Update之后，LateUpdate之前的回调，可以获取到相机的最新朝向
 
         public enum CharacterView
@@ -26,7 +26,6 @@ namespace Framework
 
         public Camera                       main                                { get; private set; }
 
-        [Space(10)]
         private Vector2                     m_DragDelta;                                                // .x表示Yaw；.y表示Pitch
         private float                       m_PinchDelta;                                               // 
         
@@ -36,8 +35,7 @@ namespace Framework
         private float                       m_PinchSensitivityOnMobile          = 1.0f;                 // 【暂时屏蔽】移动平台上pinch时灵敏度的加乘(multiply)       
         private float                       m_PinchSensitivityOnPC              = 0.02f;                // 【暂时屏蔽】PC平台上pinch时灵敏度的加乘(multiply)       
 
-        private float                       m_SmoothTime                        = 0.15f;                // 平滑参数，持续影响fov、distance
-        private float                       m_RigSmoothTime;                                            // 仅rig发生变化时起作用，过渡结束置0
+        public float                        m_SmoothTime                        = 0.15f;                // 平滑参数，持续影响fov、distance
         public LayerMask                    m_CollisionMask;                                            // 镜头碰撞Mask
         public float                        m_SphereCastRadius                  = 0.3f;
         
@@ -65,7 +63,7 @@ namespace Framework
         private float                       m_FovVelocity;
         private float                       m_DisVelocity;
         //private float                       m_PitchVelocity;
-        //private float                       m_YawVelocity;
+        private float                       m_YawVelocity;
 
         private Ray                         m_Ray                               = new Ray();
         private RaycastHit[]                m_Hits                              = new RaycastHit[16];
@@ -118,10 +116,9 @@ namespace Framework
             m_RigVelocity = Vector3.zero;
             m_FovVelocity = 0;
             //m_PitchVelocity = 0;
-            //m_YawVelocity = 0;
+            m_YawVelocity = 0;
             m_DisVelocity = 0;
             m_SmoothTime = smoothTime;
-            m_RigSmoothTime = smoothTime;
         }
 
         private CameraViewInfo GetViewInfo(CharacterView view)
@@ -175,16 +172,16 @@ namespace Framework
 
             InitViewInfo(m_ViewTarget, GetViewInfo(defaultView));
         }
-
-
+        
         /// <summary>
         /// 常规相机位的切换，根据需求pitch、yaw、distance维持不变
         /// </summary>
-        /// <param name="InViewInfo"></param>
+        /// <param name="charView"></param>
+        /// <param name="isAiming"></param>
         /// <param name="smoothTime"></param>
-        public void SetCharacterView(CharacterView view, bool isAiming = false, float smoothTime = 0.15f)
+        public void SetCharacterView(CharacterView charView, bool isAiming = false, float smoothTime = 0.15f)
         {
-            SetPendingViewInfo(m_ViewTarget, GetViewInfo(view), smoothTime);
+            SetPendingViewInfo(m_ViewTarget, GetViewInfo(charView), smoothTime);
 
             // procedural view info, 继承当前pitch，yaw，distance
             m_PendingVT.m_ViewInfo.pitch = m_CurVT.m_ViewInfo.pitch;
@@ -196,14 +193,17 @@ namespace Framework
                 m_PendingVT.m_ViewInfo.rigOffset = m_PendingVT.m_ViewInfo.rigOffsetWhenAim;
             }
         }
-
+        
         private void Update()
         {
-            ProcessInput();
+            if(!m_isWatching)
+            {
+                ProcessInput();
+            }
 
             UpdateViewInfoExceptRig();
 
-            OnPostUpdate?.Invoke();
+            OnPostUpdate?.Invoke(m_isWatching);
         }
 
         /// <summary>
@@ -254,26 +254,23 @@ namespace Framework
                 m_CurVT.m_ViewInfo.pitch = NormalizeAngle(m_PendingVT.m_ViewInfo.pitch);        // 优化，FPS不考虑缓动效果
 
                 // yaw
-                //m_CurVT.m_ViewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.yaw, m_PendingVT.m_ViewInfo.yaw, ref m_YawVelocity, m_SmoothTime));
-                m_CurVT.m_ViewInfo.yaw = NormalizeAngle(m_PendingVT.m_ViewInfo.yaw);            // 优化，FPS不考虑缓动效果
+                if(m_isWatching && m_isRecovering)
+                {
+                    m_CurVT.m_ViewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.yaw, m_PendingVT.m_ViewInfo.yaw, ref m_YawVelocity, m_SmoothTime));
+                    if (Mathf.Abs(m_YawVelocity) < 0.001f)
+                    {
+                        m_isWatching = false;
+                    }
+                }
+                else
+                    m_CurVT.m_ViewInfo.yaw = NormalizeAngle(m_PendingVT.m_ViewInfo.yaw);            // 优化，FPS不考虑缓动效果
             }
         }
 
         // FPS游戏是先转动角色，在根据角色朝向确定rig，故rig延后更新
         private void UpdateRigViewInfo()
         {
-            if(m_RigSmoothTime < 0.0001f)
-            {
-                m_CurVT.m_ViewInfo.rigOffset = m_PendingVT.m_ViewInfo.rigOffset;
-            }
-            else
-            {
-                m_CurVT.m_ViewInfo.rigOffset = Vector3.SmoothDamp(m_CurVT.m_ViewInfo.rigOffset, m_PendingVT.m_ViewInfo.rigOffset, ref m_RigVelocity, m_RigSmoothTime);
-                if (m_RigVelocity.sqrMagnitude < 0.0001f)
-                {
-                    m_RigSmoothTime = 0;
-                }
-            }
+            m_CurVT.m_ViewInfo.rigOffset = Vector3.SmoothDamp(m_CurVT.m_ViewInfo.rigOffset, m_PendingVT.m_ViewInfo.rigOffset, ref m_RigVelocity, m_SmoothTime);
 
             if (m_CurVT.m_ViewTarget != null)
             {
@@ -424,6 +421,14 @@ namespace Framework
         {
             get
             {
+                return transform.forward;
+            }
+        }
+
+        public Vector3 directionXZ
+        {
+            get
+            {
                 float radian = m_CurVT.m_ViewInfo.yaw * Mathf.Deg2Rad;
                 return new Vector3(Mathf.Sin(radian), 0, Mathf.Cos(radian));
             }
@@ -439,7 +444,34 @@ namespace Framework
                 return angle - 360;
             else
                 return angle;
-        }        
+        }
+
+        private bool m_isWatching;
+        private bool m_isRecovering;
+        public void BeginWatching()
+        {
+            m_DragDelta = Vector2.zero;
+            m_isWatching = true;
+            m_isRecovering = false;
+        }
+
+        public void ProcessInputWhenWatching(Vector2 dragDelta)
+        {
+            m_DragDelta = dragDelta;
+            m_DragDelta.y *= -1;
+        }
+
+        public void EndWatching(float smoothTime)
+        {
+            m_DragDelta = Vector2.zero;
+            m_isRecovering = true;
+
+            SetPendingViewInfo(m_ViewTarget, m_CurVT.m_ViewInfo, smoothTime);
+
+            m_PendingVT.m_ViewInfo.pitch = m_CurVT.m_ViewInfo.pitch;
+            m_PendingVT.m_ViewInfo.yaw = NormalizeAngle(m_ViewTarget != null ? m_ViewTarget.transform.rotation.eulerAngles.y : 0);
+            m_PendingVT.m_ViewInfo.distance = m_CurVT.m_ViewInfo.distance;
+        }
 
         ///////////////////////////////////////////// 镜头切换、震屏等接口       
         /// <summary>
@@ -515,7 +547,6 @@ namespace Framework
         public string effectProfileAssetPath { get; set; }
 
         public string viewInfoProfileAssetPath { get; set; }
-        public Camera Camera { get => main; set => main = value; }
 #endif
     }
 }
