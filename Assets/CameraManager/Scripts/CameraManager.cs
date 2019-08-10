@@ -183,9 +183,9 @@ namespace Framework
         {
             SetPendingViewInfo(m_ViewTarget, GetViewInfo(charView), smoothTime);
 
-            // procedural view info, 继承当前pitch，yaw，distance
+            // procedural view data, inherit current pitch，yaw，distance
             m_PendingVT.m_ViewInfo.pitch = m_CurVT.m_ViewInfo.pitch;
-            m_PendingVT.m_ViewInfo.yaw = m_CurVT.m_ViewInfo.yaw;
+            m_PendingVT.m_ViewInfo.yaw = m_isWatching ? m_PendingVT.m_ViewInfo.yaw : m_CurVT.m_ViewInfo.yaw;        // 观察模式下切换charView维持yaw不变 —— corner case
             m_PendingVT.m_ViewInfo.distance = m_CurVT.m_ViewInfo.distance;
 
             if(isAiming)
@@ -257,8 +257,11 @@ namespace Framework
                 if(m_isWatching && m_isRecovering)
                 {
                     m_CurVT.m_ViewInfo.yaw = NormalizeAngle(Mathf.SmoothDampAngle(m_CurVT.m_ViewInfo.yaw, m_PendingVT.m_ViewInfo.yaw, ref m_YawVelocity, m_SmoothTime));
-                    if (Mathf.Abs(m_YawVelocity) < 0.001f)
+                    //Debug.LogFormat("{0}    {1}     {2}     {3}", Time.frameCount, Time.time, m_YawVelocity, (m_PendingVT.m_ViewInfo.yaw - m_CurVT.m_ViewInfo.yaw));
+                    //if (Mathf.Abs(m_YawVelocity) < 0.2f)
+                    if( Mathf.Abs(m_PendingVT.m_ViewInfo.yaw - m_CurVT.m_ViewInfo.yaw) < 0.5f)
                     {
+                        //Debug.LogWarningFormat("{0}    {1}     {2}      {3}", Time.frameCount, Time.time, m_YawVelocity, (m_PendingVT.m_ViewInfo.yaw - m_CurVT.m_ViewInfo.yaw));
                         m_isWatching = false;
                     }
                 }

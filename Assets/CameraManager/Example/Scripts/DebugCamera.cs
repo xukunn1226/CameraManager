@@ -49,7 +49,7 @@ public class DebugCamera : MonoBehaviour
                 CameraManager.instance.ProcessInputWhenWatching(gesture.DeltaMove);
                 break;
             case ContinuousGesturePhase.Ended:
-                CameraManager.instance.EndWatching(0.5f);
+                CameraManager.instance.EndWatching(0.2f);
                 break;
         }
     }
