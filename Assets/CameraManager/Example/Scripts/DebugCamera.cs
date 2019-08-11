@@ -8,8 +8,8 @@ public class DebugCamera : MonoBehaviour
     public GameObject m_Player;
     public CameraViewInfoCollection m_Collection;
 
-    private bool m_isAiming;            // C && Return控制开启
-    private bool m_isWatching;          // T && Return控制开启
+    private bool m_isAiming;
+    private bool m_isWatching;
 
     private void Start()
     {
@@ -71,46 +71,50 @@ public class DebugCamera : MonoBehaviour
         }
     }
 
-    private void LateUpdate()
+    private void OnGUI()
     {
-        if(Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Walk, m_isAiming);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Run, m_isAiming);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Sprint, m_isAiming);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha4))
-        {
-            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Squat, m_isAiming);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha5))
-        {
-            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Roll, m_isAiming);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha6))
-        {
-            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Jump, m_isAiming);
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha7))
-        {
-            CameraManager.instance.SetCharacterView(CameraManager.CharacterView.Fly, m_isAiming);
-        }
-        if(Input.GetKey(KeyCode.C) && Input.GetKeyDown(KeyCode.Return))
-        {
-            m_isAiming = !m_isAiming;
-            Debug.LogFormat("m_isAiming: {0}", m_isAiming);
-        }
-        if (Input.GetKey(KeyCode.T) && Input.GetKeyDown(KeyCode.Return))
+        if(GUI.Button(new Rect(Screen.width - 240, 100, 80, 80), "Watching"))
         {
             m_isWatching = true;
             CameraManager.instance.BeginWatching();
             Debug.LogFormat("m_isWatching: {0}", m_isWatching);
+        }
+
+        if(GUI.Button(new Rect(Screen.width - 120, 260, 80, 80), "Aiming"))
+        {
+            m_isAiming = !m_isAiming;
+            Debug.LogFormat("m_isAiming: {0}", m_isAiming);
+        }
+    }
+    private void LateUpdate()
+    {
+        if(Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            CameraManager.instance.SetCharacterView(CameraViewInfoCollection.CharacterView.Walk, m_isAiming);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            CameraManager.instance.SetCharacterView(CameraViewInfoCollection.CharacterView.Run, m_isAiming);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            CameraManager.instance.SetCharacterView(CameraViewInfoCollection.CharacterView.Sprint, m_isAiming);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            CameraManager.instance.SetCharacterView(CameraViewInfoCollection.CharacterView.Squat, m_isAiming);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha5))
+        {
+            CameraManager.instance.SetCharacterView(CameraViewInfoCollection.CharacterView.Roll, m_isAiming);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            CameraManager.instance.SetCharacterView(CameraViewInfoCollection.CharacterView.Jump, m_isAiming);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha7))
+        {
+            CameraManager.instance.SetCharacterView(CameraViewInfoCollection.CharacterView.Fly, m_isAiming);
         }
     }
 }

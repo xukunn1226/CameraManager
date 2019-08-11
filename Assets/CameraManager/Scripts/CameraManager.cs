@@ -7,17 +7,6 @@ namespace Framework
         public delegate void EventHandler(bool isWatching);
         public event EventHandler           OnPostUpdate;                                               // Update之后，LateUpdate之前的回调，可以获取到相机的最新朝向
 
-        public enum CharacterView
-        {
-            Walk,
-            Run,
-            Sprint,
-            Squat,
-            Roll,
-            Jump,
-            Fly,
-        }
-
         static public CameraManager         instance
         {
             get;
@@ -121,37 +110,12 @@ namespace Framework
             m_SmoothTime = smoothTime;
         }
 
-        private CameraViewInfo GetViewInfo(CharacterView view)
+        private CameraViewInfo GetViewInfo(CameraViewInfoCollection.CharacterView charView)
         {
             if (m_ViewInfoCollection == null)
                 return null;
 
-            CameraViewInfo viewInfo = m_ViewInfoCollection.m_RunView;
-            switch (view)
-            {
-                case CharacterView.Walk:
-                    viewInfo = m_ViewInfoCollection.m_WalkView;
-                    break;
-                case CharacterView.Run:
-                    viewInfo = m_ViewInfoCollection.m_RunView;
-                    break;
-                case CharacterView.Sprint:
-                    viewInfo = m_ViewInfoCollection.m_SprintView;
-                    break;
-                case CharacterView.Squat:
-                    viewInfo = m_ViewInfoCollection.m_SquatView;
-                    break;
-                case CharacterView.Roll:
-                    viewInfo = m_ViewInfoCollection.m_RollView;
-                    break;
-                case CharacterView.Jump:
-                    viewInfo = m_ViewInfoCollection.m_JumpView;
-                    break;
-                case CharacterView.Fly:
-                    viewInfo = m_ViewInfoCollection.m_FlyView;
-                    break;
-            }
-            return viewInfo;
+            return m_ViewInfoCollection[charView];
         }
 
         /// <summary>
@@ -159,7 +123,7 @@ namespace Framework
         /// </summary>
         /// <param name="InViewTarget"></param>
         /// <param name="InViewInfoCollection"></param>
-        public void InitViewInfoCollection(Transform InViewTarget, CameraViewInfoCollection InViewInfoCollection, CharacterView defaultView = CharacterView.Run)
+        public void InitViewInfoCollection(Transform InViewTarget, CameraViewInfoCollection InViewInfoCollection, CameraViewInfoCollection.CharacterView defaultView = CameraViewInfoCollection.CharacterView.Run)
         {
             if (InViewTarget == null || InViewInfoCollection == null)
             {
@@ -179,7 +143,7 @@ namespace Framework
         /// <param name="charView"></param>
         /// <param name="isAiming"></param>
         /// <param name="smoothTime"></param>
-        public void SetCharacterView(CharacterView charView, bool isAiming = false, float smoothTime = 0.15f)
+        public void SetCharacterView(CameraViewInfoCollection.CharacterView charView, bool isAiming = false, float smoothTime = 0.15f)
         {
             SetPendingViewInfo(m_ViewTarget, GetViewInfo(charView), smoothTime);
 
@@ -510,46 +474,50 @@ namespace Framework
         }
 
 #if UNITY_EDITOR
-        public void EditorSetViewTarget(Transform viewTarget, CameraViewInfo viewInfo, float smoothTime)
+        public void EditorSetCharacterView(CameraViewInfoCollection.CharacterView charView, bool isAiming = false, float smoothTime = 0.15f)
         {
-            //SetViewTarget(viewTarget, viewInfo, smoothTime);
+            SetCharacterView(charView, isAiming, smoothTime);
+            curCharView = charView;
         }
 
-        public void GetViewInfo(out Transform viewTarget, out CameraViewInfo viewInfo)
+        public void GetViewInfo(out Transform viewTarget, out CameraViewInfo viewInfo, out CameraViewInfo srcViewInfo)
         {
             viewTarget = (m_PendingVT != null && m_PendingVT.m_ViewTarget != null) ? m_PendingVT.m_ViewTarget : null;
             viewInfo = (m_PendingVT != null && m_PendingVT.m_ViewInfo != null) ? m_PendingVT.m_ViewInfo : null;
+            srcViewInfo = m_ViewInfoCollection != null ? m_ViewInfoCollection[curCharView] : null;
         }
+
+        public void SaveToDefault(Transform viewTarget, CameraViewInfo srcViewInfo, CameraViewInfo dstViewInfo)
+        {
+            if (srcViewInfo == null || dstViewInfo == null)
+            {
+                Debug.LogError("CameraController.Save: srcViewInfo == null ||dstViewInfo == null");
+                return;
+            }
+
+            dstViewInfo.rigOffset           = srcViewInfo.rigOffset;
+            dstViewInfo.rigOffsetWhenAim    = srcViewInfo.rigOffsetWhenAim;
+            dstViewInfo.defaultFOV          = srcViewInfo.fov;
+            dstViewInfo.defaultPitch        = srcViewInfo.pitch;
+            dstViewInfo.minPitch            = srcViewInfo.minPitch;
+            dstViewInfo.maxPitch            = srcViewInfo.maxPitch;
+            dstViewInfo.defaultYaw          = 0;
+            dstViewInfo.defaultDistance     = srcViewInfo.distance;
+            dstViewInfo.minDistance         = srcViewInfo.minDistance;
+            dstViewInfo.maxDistance         = srcViewInfo.maxDistance;
+        }
+
+        private CameraViewInfoCollection.CharacterView m_curCharView = CameraViewInfoCollection.CharacterView.Run;
+        public CameraViewInfoCollection.CharacterView curCharView { get { return m_curCharView; } set { m_curCharView = value; } }
+
+        public bool m_isAiming { get; set; }
+
 
         public void GetEffectProfile(out CameraEffectInfo profile)
         {
             profile = m_EffectInfo;
         }
-
-        public void GetViewInfoProfile(out CameraViewInfoCollection viewInfoProfile)
-        {
-            viewInfoProfile = m_ViewInfoCollection;
-        }
-
-        public void SaveToDefault(Transform viewTarget, CameraViewInfo viewInfo)
-        {
-            if (viewInfo == null)
-            {
-                Debug.LogError("CameraController.Save: viewInfo == null");
-                return;
-            }
-
-            viewInfo.defaultFOV         = viewInfo.fov;
-            viewInfo.defaultYaw         = NormalizeAngle(viewInfo.yaw - (viewTarget != null ? viewTarget.transform.rotation.eulerAngles.y : 0));
-            viewInfo.defaultPitch       = viewInfo.pitch;
-            viewInfo.defaultDistance    = viewInfo.distance;
-        }
-
-        public string assetPath { get; set; }
-
         public string effectProfileAssetPath { get; set; }
-
-        public string viewInfoProfileAssetPath { get; set; }
 #endif
     }
 }
