@@ -16,7 +16,6 @@ namespace Framework
         public CameraEffectShakePosition    shakePosition   = new CameraEffectShakePosition();
         public CameraEffectShakeRotation    shakeRotation   = new CameraEffectShakeRotation();
         public CameraEffectFOV              shakeFOV        = new CameraEffectFOV();
-        public CameraEffectAspect           shakeAspect     = new CameraEffectAspect();
 
         private float                       _startTime;
         private System.Action               onFinished;
@@ -51,10 +50,6 @@ namespace Framework
             {
                 shakeFOV.OnBegin(cam, duration);
             }
-            if( shakeAspect.active )
-            {
-                shakeAspect.OnBegin(cam, duration);
-            }
         }
 
         private void Sample(Camera cam, float time)
@@ -71,10 +66,6 @@ namespace Framework
             {
                 shakeFOV.OnSample(cam, time);
             }
-            if (shakeAspect.active)
-            {
-                shakeAspect.OnSample(cam, time);
-            }
         }
 
         private void End()
@@ -90,10 +81,6 @@ namespace Framework
             if (shakeFOV.active)
             {
                 shakeFOV.OnEnd();
-            }
-            if (shakeAspect.active)
-            {
-                shakeAspect.OnEnd();
             }
         }
 
@@ -113,10 +100,6 @@ namespace Framework
             {
                 shakeFOV.OnBeginFadeOut(cam, _fadeOutTime);
             }
-            if (shakeAspect.active)
-            {
-                shakeAspect.OnBeginFadeOut(cam, _fadeOutTime);
-            }
         }
 
         private void SampleFadeOut(Camera cam, float time)
@@ -133,10 +116,6 @@ namespace Framework
             {
                 shakeFOV.OnSampleFadeOut(cam, time);
             }
-            if (shakeAspect.active)
-            {
-                shakeAspect.OnSampleFadeOut(cam, time);
-            }
         }
 
         private void EndFadeOut()
@@ -152,10 +131,6 @@ namespace Framework
             if (shakeFOV.active)
             {
                 shakeFOV.OnEndFadeOut();
-            }
-            if (shakeAspect.active)
-            {
-                shakeAspect.OnEndFadeOut();
             }
         }
 
