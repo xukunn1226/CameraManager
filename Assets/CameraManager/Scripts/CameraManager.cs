@@ -174,7 +174,7 @@ namespace Framework
 
             UpdateCamera();
 
-            //UpdateCameraEffect();
+            UpdateCameraEffect();
         }
 
         private void ProcessInput()
@@ -276,19 +276,19 @@ namespace Framework
             {
                 m_EffectInfo.UpdateCameraEffect(main);
 
-                if( m_EffectInfo.shakePosition.active )
+                if( m_EffectInfo.m_ShakePosition.m_Active )
                 {
-                    main.transform.localPosition += m_EffectInfo.shakePosition.FinalPosition;
+                    main.transform.localPosition += m_EffectInfo.m_ShakePosition.m_FinalPosition;
                 }
 
-                if( m_EffectInfo.shakeRotation.active )
+                if( m_EffectInfo.m_ShakeRotation.m_Active )
                 {
-                    main.transform.localRotation = m_EffectInfo.shakeRotation.FinalRotation;
+                    main.transform.localRotation = m_EffectInfo.m_ShakeRotation.m_FinalRotation;
                 }
 
-                if( m_EffectInfo.shakeFOV.active )
+                if( m_EffectInfo.m_ShakeFOV.m_Active )
                 {
-                    main.fieldOfView = m_EffectInfo.shakeFOV.FinalScaleOfFOV * m_CurVT.m_ViewInfo.fov;
+                    main.fieldOfView = m_EffectInfo.m_ShakeFOV.m_FinalScaleOfFOV * m_CurVT.m_ViewInfo.fov;
                 }
             }
         }
@@ -439,30 +439,30 @@ namespace Framework
         /// <summary>
         /// 播放震屏接口
         /// </summary>
-        /// <param name="profile"></param>
+        /// <param name="effectInfo"></param>
         /// <param name="onFinished"></param>
-        public void PlayCameraEffect(CameraEffectInfo profile, System.Action onFinished = null)
+        public void PlayCameraEffect(CameraEffectInfo effectInfo, System.Action onFinished = null)
         {
-            if (profile == null)
+            if (effectInfo == null)
             {
                 Debug.LogWarning("PlayCameraEffect: CameraEffectProfile == none");
                 return;
             }
 
-            if (m_EffectInfo != null && m_EffectInfo.IsPlaying() && m_EffectInfo.priority > profile.priority)
+            if (m_EffectInfo != null && m_EffectInfo.IsPlaying() && m_EffectInfo.m_Priority > effectInfo.m_Priority)
                 return;
 
             StopCameraEffect();
 
-            m_EffectInfo = profile;
-            m_EffectInfo.Play(true, onFinished);
+            m_EffectInfo = effectInfo;
+            m_EffectInfo.Play(onFinished);
         }
 
         public void StopCameraEffect()
         {
             if (m_EffectInfo != null && m_EffectInfo.IsPlaying())
             {
-                m_EffectInfo.Stop(0);
+                m_EffectInfo.Stop();
 
                 UpdateCameraEffect();
             }

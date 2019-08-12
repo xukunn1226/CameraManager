@@ -8,20 +8,17 @@ namespace Framework
     public class CameraEffectInfo : ScriptableObject
     {
         [Tooltip("震屏时间")]
-        public float                        duration        = 1;
+        public float                        m_Duration        = 1;
 
         [Tooltip("优先级，值越大优先级越高")]
-        public int                          priority;
+        public int                          m_Priority;
 
-        public CameraEffectShakePosition    shakePosition   = new CameraEffectShakePosition();
-        public CameraEffectShakeRotation    shakeRotation   = new CameraEffectShakeRotation();
-        public CameraEffectFOV              shakeFOV        = new CameraEffectFOV();
+        public CameraEffectShakePosition    m_ShakePosition   = new CameraEffectShakePosition();
+        public CameraEffectShakeRotation    m_ShakeRotation   = new CameraEffectShakeRotation();
+        public CameraEffectFOV              m_ShakeFOV        = new CameraEffectFOV();
 
-        private float                       _startTime;
+        private float                       m_StartTime;
         private System.Action               onFinished;
-        private bool                        _autoFinish;        // true: 播放时间到就自动结束; false: 播放时间到则维持在最后时间点，直至主动请求结束
-        private float                       _fadeOutTime;       // autoFinish = false时切换回初始状态的时间
-        private float                       _fadeOutStartTime;
 
         private enum CameraEffectState
         {
@@ -29,115 +26,61 @@ namespace Framework
             Begin,
             Sample,
             End,
-            FadeOutSample,
-            FadeOutEnd,
         }
         private CameraEffectState           _effectState = CameraEffectState.None;
 
         private void Begin(Camera cam)
         {
-            _startTime = Time.time;
+            m_StartTime = Time.time;
 
-            if( shakePosition.active )
+            if( m_ShakePosition.m_Active )
             {
-                shakePosition.OnBegin(cam, duration);
+                m_ShakePosition.OnBegin(cam, m_Duration);
             }
-            if( shakeRotation.active )
+            if( m_ShakeRotation.m_Active )
             {
-                shakeRotation.OnBegin(cam, duration);
+                m_ShakeRotation.OnBegin(cam, m_Duration);
             }
-            if( shakeFOV.active )
+            if( m_ShakeFOV.m_Active )
             {
-                shakeFOV.OnBegin(cam, duration);
+                m_ShakeFOV.OnBegin(cam, m_Duration);
             }
         }
 
         private void Sample(Camera cam, float time)
         {
-            if (shakePosition.active)
+            if (m_ShakePosition.m_Active)
             {
-                shakePosition.OnSample(cam, time);
+                m_ShakePosition.OnSample(cam, time);
             }
-            if (shakeRotation.active)
+            if (m_ShakeRotation.m_Active)
             {
-                shakeRotation.OnSample(cam, time);
+                m_ShakeRotation.OnSample(cam, time);
             }
-            if (shakeFOV.active)
+            if (m_ShakeFOV.m_Active)
             {
-                shakeFOV.OnSample(cam, time);
+                m_ShakeFOV.OnSample(cam, time);
             }
         }
 
         private void End()
         {
-            if (shakePosition.active)
+            if (m_ShakePosition.m_Active)
             {
-                shakePosition.OnEnd();
+                m_ShakePosition.OnEnd();
             }
-            if (shakeRotation.active)
+            if (m_ShakeRotation.m_Active)
             {
-                shakeRotation.OnEnd();
+                m_ShakeRotation.OnEnd();
             }
-            if (shakeFOV.active)
+            if (m_ShakeFOV.m_Active)
             {
-                shakeFOV.OnEnd();
-            }
-        }
-
-        private void BeginFadeOut(Camera cam)
-        {
-            _fadeOutStartTime = Time.time;
-
-            if (shakePosition.active)
-            {
-                shakePosition.OnBeginFadeOut(cam, _fadeOutTime);
-            }
-            if (shakeRotation.active)
-            {
-                shakeRotation.OnBeginFadeOut(cam, _fadeOutTime);
-            }
-            if (shakeFOV.active)
-            {
-                shakeFOV.OnBeginFadeOut(cam, _fadeOutTime);
+                m_ShakeFOV.OnEnd();
             }
         }
-
-        private void SampleFadeOut(Camera cam, float time)
-        {
-            if (shakePosition.active)
-            {
-                shakePosition.OnSampleFadeOut(cam, time);
-            }
-            if (shakeRotation.active)
-            {
-                shakeRotation.OnSampleFadeOut(cam, time);
-            }
-            if (shakeFOV.active)
-            {
-                shakeFOV.OnSampleFadeOut(cam, time);
-            }
-        }
-
-        private void EndFadeOut()
-        {
-            if (shakePosition.active)
-            {
-                shakePosition.OnEndFadeOut();
-            }
-            if (shakeRotation.active)
-            {
-                shakeRotation.OnEndFadeOut();
-            }
-            if (shakeFOV.active)
-            {
-                shakeFOV.OnEndFadeOut();
-            }
-        }
-
+        
         /// <summary>
         /// 震屏更新流程
-        /// autoFinish = true， Begin -> Sample -> End
-        /// autoFinish = false, Begin -> Sample -> End/BeginFadeOut -> SampleFadeOut -> EndFadeOut
         /// </summary>
         /// <param name="cam"></param>
         public void UpdateCameraEffect(Camera cam)
@@ -152,61 +95,20 @@ namespace Framework
                     break;
                 case CameraEffectState.Sample:
                     {
-                        float elapsedTime = Time.time - _startTime;
-                        if( elapsedTime < duration )
+                        float elapsedTime = Time.time - m_StartTime;
+                        if( elapsedTime < m_Duration )
                         {
                             Sample(cam, elapsedTime);
                         }
                         else
                         {
-                            if( _autoFinish )
-                            {
-                                _effectState = CameraEffectState.End;
-                            }
-                            else
-                            {
-                                // 非自动结束始终维持在最后
-                                Sample(cam, duration);
-                            }
+                            _effectState = CameraEffectState.End;
                         }
                     }
                     break;
                 case CameraEffectState.End:
                     {
-                        if( _autoFinish )
-                        {
-                            End();
-                            _effectState = CameraEffectState.None;
-
-                            if (onFinished != null)
-                            {
-                                onFinished();
-                                onFinished = null;
-                            }
-                        }
-                        else
-                        {
-                            BeginFadeOut(cam);
-                            _effectState = CameraEffectState.FadeOutSample;
-                        }
-                    }
-                    break;
-                case CameraEffectState.FadeOutSample:
-                    {
-                        float elapsedTime = Time.time - _fadeOutStartTime;
-                        if( elapsedTime < _fadeOutTime )
-                        {
-                            SampleFadeOut(cam, elapsedTime);
-                        }
-                        else
-                        {
-                            _effectState = CameraEffectState.FadeOutEnd;
-                        }
-                    }
-                    break;
-                case CameraEffectState.FadeOutEnd:
-                    {
-                        EndFadeOut();
+                        End();
                         _effectState = CameraEffectState.None;
 
                         if (onFinished != null)
@@ -222,9 +124,8 @@ namespace Framework
         /// <summary>
         /// 播放相机效果
         /// </summary>
-        public void Play(bool autoFinish = true, System.Action onFinished = null)
+        public void Play(System.Action onFinished = null)
         {
-            _autoFinish = autoFinish;
             _effectState = CameraEffectState.Begin;
             this.onFinished = onFinished;
         }
@@ -232,9 +133,8 @@ namespace Framework
         /// <summary>
         /// 立即停止播放相机效果
         /// </summary>
-        public void Stop(float fadeOutTime)
+        public void Stop()
         {
-            _fadeOutTime = fadeOutTime;
             if( IsPlaying() )
             {
                 _effectState = CameraEffectState.End;

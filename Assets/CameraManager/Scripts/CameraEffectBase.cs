@@ -7,21 +7,14 @@ namespace Framework
     public class CameraEffectBase
     {
         [SerializeField]
-        public bool         active;
+        public bool         m_Active;
 
-        protected float     _duration;
-        protected float     _durationFadeOut;
+        protected float     m_Duration;
 
-        public virtual void OnBegin(Camera cam, float duration)             { _duration = Mathf.Max(0.1f, duration); }
+        public virtual void OnBegin(Camera cam, float duration)             { m_Duration = Mathf.Max(0.1f, duration); }
 
         public virtual void OnSample(Camera cam, float time) { }
 
         public virtual void OnEnd() { }
-
-        public virtual void OnBeginFadeOut(Camera cam, float duration)      { _durationFadeOut = Mathf.Max(0.1f, duration); }
-
-        public virtual void OnSampleFadeOut(Camera cam, float time) { }
-
-        public virtual void OnEndFadeOut() { }
     }
 }

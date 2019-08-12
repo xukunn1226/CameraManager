@@ -7,66 +7,44 @@ namespace Framework
     [System.Serializable]
     public class CameraEffectShakeRotation : CameraEffectBase
     {
-        public Vector3          strength;
+        public Vector3          m_Strength;
 
-        public AnimationCurve   xCurve          = AnimationCurve.Linear(0, 1, 1, 0);
-        public AnimationCurve   yCurve          = AnimationCurve.Linear(0, 1, 1, 0);
-        public AnimationCurve   zCurve          = AnimationCurve.Linear(0, 1, 1, 0);
+        public AnimationCurve   m_XCurve          = AnimationCurve.Linear(0, 1, 1, 0);
+        public AnimationCurve   m_YCurve          = AnimationCurve.Linear(0, 1, 1, 0);
+        public AnimationCurve   m_ZCurve          = AnimationCurve.Linear(0, 1, 1, 0);
 
-        public Quaternion       FinalRotation   { get; private set; }
+        public Quaternion       m_FinalRotation   { get; private set; }
 
-        private float           _xCurveLength;
-        private float           _yCurveLength;
-        private float           _zCurveLength;
+        private float           m_XCurveLength;
+        private float           m_YCurveLength;
+        private float           m_ZCurveLength;
 
-        private Quaternion      _startFadeOutRotation;
 
         public override void OnBegin(Camera cam, float duration)
         {
             base.OnBegin(cam, duration);
 
-            FinalRotation = Quaternion.identity;
-            _xCurveLength = xCurve.keys.Length > 0 ? xCurve.keys[xCurve.keys.Length - 1].time : 0;
-            _yCurveLength = yCurve.keys.Length > 0 ? yCurve.keys[yCurve.keys.Length - 1].time : 0;
-            _zCurveLength = zCurve.keys.Length > 0 ? zCurve.keys[zCurve.keys.Length - 1].time : 0;
+            m_FinalRotation = Quaternion.identity;
+            m_XCurveLength = m_XCurve.keys.Length > 0 ? m_XCurve.keys[m_XCurve.keys.Length - 1].time : 0;
+            m_YCurveLength = m_YCurve.keys.Length > 0 ? m_YCurve.keys[m_YCurve.keys.Length - 1].time : 0;
+            m_ZCurveLength = m_ZCurve.keys.Length > 0 ? m_ZCurve.keys[m_ZCurve.keys.Length - 1].time : 0;
         }
 
         public override void OnSample(Camera cam, float time)
         {
             Vector3 randomRotation = Vector3.zero;
                         
-            randomRotation.x = strength.x * xCurve.Evaluate(time * _xCurveLength / _duration);
-            randomRotation.y = strength.y * yCurve.Evaluate(time * _yCurveLength / _duration);
-            randomRotation.z = strength.z * zCurve.Evaluate(time * _zCurveLength / _duration);
-            FinalRotation = Quaternion.Euler(randomRotation);
+            randomRotation.x = m_Strength.x * m_XCurve.Evaluate(time * m_XCurveLength / m_Duration);
+            randomRotation.y = m_Strength.y * m_YCurve.Evaluate(time * m_YCurveLength / m_Duration);
+            randomRotation.z = m_Strength.z * m_ZCurve.Evaluate(time * m_ZCurveLength / m_Duration);
+            m_FinalRotation = Quaternion.Euler(randomRotation);
         }
 
         public override void OnEnd()
         {
             base.OnEnd();
 
-            FinalRotation = Quaternion.identity;
-        }
-
-        public override void OnBeginFadeOut(Camera cam, float duration)
-        {
-            base.OnBeginFadeOut(cam, duration);
-
-            _startFadeOutRotation = FinalRotation;
-        }
-
-        public override void OnSampleFadeOut(Camera cam, float time)
-        {
-            base.OnSampleFadeOut(cam, time);
-
-            FinalRotation = Quaternion.Lerp(_startFadeOutRotation, Quaternion.identity, time / _durationFadeOut);
-        }
-
-        public override void OnEndFadeOut()
-        {
-            base.OnEndFadeOut();
-
-            FinalRotation = Quaternion.identity;
+            m_FinalRotation = Quaternion.identity;
         }
     }
 }
