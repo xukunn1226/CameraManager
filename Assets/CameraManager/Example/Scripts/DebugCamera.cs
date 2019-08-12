@@ -16,6 +16,7 @@ public class DebugCamera : MonoBehaviour
         CameraManager.instance.InitViewInfoCollection(m_Player.transform, m_Collection);
 
         InputManager.instance.gameObject.GetComponent<DragRecognizer>().OnGesture += OnDrag;
+
         CameraManager.instance.OnPostUpdate += UpdatePlayerRotation;
     }
 

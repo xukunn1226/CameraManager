@@ -17,7 +17,7 @@ namespace Framework
             Max,
         }
 
-        public CameraViewInfo[] m_CharView = new CameraViewInfo[7];
+        public CameraViewInfo[] m_CharView = new CameraViewInfo[(int)CharacterView.Max];
 
         public CameraViewInfo this[CharacterView index]
         {

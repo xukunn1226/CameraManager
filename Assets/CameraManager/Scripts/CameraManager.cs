@@ -170,9 +170,6 @@ namespace Framework
             OnPostUpdate?.Invoke(m_isWatching);
         }
 
-        /// <summary>
-        /// camera update pipeline
-        /// </summary>
         void LateUpdate()
         {
             UpdateRigViewInfo();
