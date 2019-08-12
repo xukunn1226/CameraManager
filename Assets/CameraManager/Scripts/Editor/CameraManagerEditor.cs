@@ -14,9 +14,9 @@ namespace Framework
         private SerializedProperty          rigOffsetXProp;
         private SerializedProperty          rigOffsetYProp;
         private SerializedProperty          rigOffsetZProp;
-        private SerializedProperty          rigOffsetXWhenAimProp;
-        private SerializedProperty          rigOffsetYWhenAimProp;
-        private SerializedProperty          rigOffsetZWhenAimProp;
+        //private SerializedProperty          rigOffsetXWhenAimProp;
+        //private SerializedProperty          rigOffsetYWhenAimProp;
+        //private SerializedProperty          rigOffsetZWhenAimProp;
 
         private SerializedProperty          defaultFOVProp;
         //private SerializedProperty        fovProp;
@@ -64,9 +64,9 @@ namespace Framework
                 rigOffsetXProp = m_viObject.FindProperty("rigOffset.x");
                 rigOffsetYProp = m_viObject.FindProperty("rigOffset.y");
                 rigOffsetZProp = m_viObject.FindProperty("rigOffset.z");
-                rigOffsetXWhenAimProp = m_viObject.FindProperty("rigOffsetWhenAim.x");
-                rigOffsetYWhenAimProp = m_viObject.FindProperty("rigOffsetWhenAim.y");
-                rigOffsetZWhenAimProp = m_viObject.FindProperty("rigOffsetWhenAim.z");
+                //rigOffsetXWhenAimProp = m_viObject.FindProperty("rigOffsetWhenAim.x");
+                //rigOffsetYWhenAimProp = m_viObject.FindProperty("rigOffsetWhenAim.y");
+                //rigOffsetZWhenAimProp = m_viObject.FindProperty("rigOffsetWhenAim.z");
 
                 defaultFOVProp = m_viObject.FindProperty("defaultFOV");
                 //fovProp = viObject.FindProperty("fov");
@@ -166,14 +166,14 @@ namespace Framework
                         EditorGUILayout.DelayedFloatField(rigOffsetZProp, GUILayout.ExpandWidth(true));
                         --EditorGUI.indentLevel;
                     }
-                    EditorGUILayout.LabelField("rigOffsetWhenAim", GUILayout.ExpandWidth(false));
-                    {
-                        ++EditorGUI.indentLevel;
-                        EditorGUILayout.DelayedFloatField(rigOffsetXWhenAimProp, GUILayout.ExpandWidth(true));
-                        EditorGUILayout.DelayedFloatField(rigOffsetYWhenAimProp, GUILayout.ExpandWidth(true));
-                        EditorGUILayout.DelayedFloatField(rigOffsetZWhenAimProp, GUILayout.ExpandWidth(true));
-                        --EditorGUI.indentLevel;
-                    }
+                    //EditorGUILayout.LabelField("rigOffsetWhenAim", GUILayout.ExpandWidth(false));
+                    //{
+                    //    ++EditorGUI.indentLevel;
+                    //    EditorGUILayout.DelayedFloatField(rigOffsetXWhenAimProp, GUILayout.ExpandWidth(true));
+                    //    EditorGUILayout.DelayedFloatField(rigOffsetYWhenAimProp, GUILayout.ExpandWidth(true));
+                    //    EditorGUILayout.DelayedFloatField(rigOffsetZWhenAimProp, GUILayout.ExpandWidth(true));
+                    //    --EditorGUI.indentLevel;
+                    //}
 
                     EditorGUI.BeginDisabledGroup(true);
                     EditorGUILayout.Slider(defaultFOVProp, 5, 90, GUILayout.ExpandWidth(true));
@@ -206,77 +206,77 @@ namespace Framework
             
             
 
-            //////// 编辑相机震屏
-            GUILayout.Space(30);
-            EditorGUI.BeginDisabledGroup(!EditorApplication.isPlaying);
-            {
-                GUILayout.Label("编辑相机震屏", EGUIStyles.TitleTextStyle);
+            ////////// 编辑相机震屏
+            //GUILayout.Space(30);
+            //EditorGUI.BeginDisabledGroup(!EditorApplication.isPlaying);
+            //{
+            //    GUILayout.Label("编辑相机震屏", EGUIStyles.TitleTextStyle);
 
-                ////// CameraEffectProfile
-                effectProfile = (CameraEffectInfo)EditorGUILayout.ObjectField("CameraEffect Profile", effectProfile, typeof(CameraEffectInfo), true, GUILayout.ExpandWidth(true));
-                EditorGUILayout.LabelField("资源路径：       " + cc.effectProfileAssetPath, GUILayout.ExpandWidth(true));
-                if (effectProfile != null)
-                {
-                    // 记录资源地址，方便执行“Save”
-                    string path = AssetDatabase.GetAssetPath(effectProfile);
-                    if (!string.IsNullOrEmpty(path))
-                    {
-                        cc.effectProfileAssetPath = path;
-                    }
-                }
+            //    ////// CameraEffectProfile
+            //    effectProfile = (CameraEffectInfo)EditorGUILayout.ObjectField("CameraEffect Profile", effectProfile, typeof(CameraEffectInfo), true, GUILayout.ExpandWidth(true));
+            //    EditorGUILayout.LabelField("资源路径：       " + cc.effectProfileAssetPath, GUILayout.ExpandWidth(true));
+            //    if (effectProfile != null)
+            //    {
+            //        // 记录资源地址，方便执行“Save”
+            //        string path = AssetDatabase.GetAssetPath(effectProfile);
+            //        if (!string.IsNullOrEmpty(path))
+            //        {
+            //            cc.effectProfileAssetPath = path;
+            //        }
+            //    }
 
-                ////// GO
-                EditorGUILayout.Separator();
-                if (GUILayout.Button("GO", GUILayout.Height(30)))
-                {
-                    if (effectProfile != null)
-                    {
-                        CameraEffectInfo ep;
-                        cc.GetEffectProfile(out ep);
+            //    ////// GO
+            //    EditorGUILayout.Separator();
+            //    if (GUILayout.Button("GO", GUILayout.Height(30)))
+            //    {
+            //        if (effectProfile != null)
+            //        {
+            //            CameraEffectInfo ep;
+            //            cc.GetEffectProfile(out ep);
 
-                        if( ep == null || !CanSave(ep) )
-                        {
-                            ep = Object.Instantiate<CameraEffectInfo>(effectProfile);
-                        }
-                        effectProfile = ep;
+            //            if( ep == null || !CanSave(ep) )
+            //            {
+            //                ep = Object.Instantiate<CameraEffectInfo>(effectProfile);
+            //            }
+            //            effectProfile = ep;
 
-                        cc.PlayCameraEffect(effectProfile);
-                    }
-                }
+            //            cc.PlayCameraEffect(effectProfile);
+            //        }
+            //    }
 
-                ////// SAVE & SAVE AS
-                EditorGUI.BeginDisabledGroup(!CanSave(effectProfile));
-                {
-                    EditorGUILayout.BeginHorizontal();
-                    if (GUILayout.Button("Save", GUILayout.Width(200)))
-                    {
-                        AssetDatabase.CreateAsset(effectProfile, cc.effectProfileAssetPath);
-                        AssetDatabase.Refresh();
-                    }
-                    if (GUILayout.Button("Save as...", GUILayout.Width(200)))
-                    {
-                        string savePath = EditorUtility.SaveFilePanel("", cc.effectProfileAssetPath, "CameraEffectProfile", "asset");
-                        if (!string.IsNullOrEmpty(savePath))
-                        {
-                            savePath = savePath.Substring(Application.dataPath.Length - 6);
-                            AssetDatabase.CreateAsset(effectProfile, savePath);
-                            AssetDatabase.Refresh();
-                        }
-                    }
-                    EditorGUILayout.EndHorizontal();
-                }
-                EditorGUI.EndDisabledGroup();
+            //    ////// SAVE & SAVE AS
+            //    EditorGUI.BeginDisabledGroup(!CanSave(effectProfile));
+            //    {
+            //        EditorGUILayout.BeginHorizontal();
+            //        if (GUILayout.Button("Save", GUILayout.Width(200)))
+            //        {
+            //            AssetDatabase.CreateAsset(effectProfile, cc.effectProfileAssetPath);
+            //            AssetDatabase.Refresh();
+            //        }
+            //        if (GUILayout.Button("Save as...", GUILayout.Width(200)))
+            //        {
+            //            string savePath = EditorUtility.SaveFilePanel("", cc.effectProfileAssetPath, "CameraEffectProfile", "asset");
+            //            if (!string.IsNullOrEmpty(savePath))
+            //            {
+            //                savePath = savePath.Substring(Application.dataPath.Length - 6);
+            //                AssetDatabase.CreateAsset(effectProfile, savePath);
+            //                AssetDatabase.Refresh();
+            //            }
+            //        }
+            //        EditorGUILayout.EndHorizontal();
+            //    }
+            //    EditorGUI.EndDisabledGroup();
 
-                GUILayout.Space(10);
-                GUILayout.Label("当前相机位参数", EGUIStyles.Label2);
-                if( effectProfile != null )
-                {
-                    Editor editor = CreateEditor(effectProfile);
-                    editor.OnInspectorGUI();
-                }
+            //    GUILayout.Space(10);
+            //    GUILayout.Label("当前相机位参数", EGUIStyles.Label2);
+            //    if( effectProfile != null )
+            //    {
+            //        Editor editor = CreateEditor(effectProfile);
+            //        editor.OnInspectorGUI();
+            //    }
 
-            }
-            EditorGUI.EndDisabledGroup();
+            //}
+            //EditorGUI.EndDisabledGroup();
         }
 
         // 判断资源是否可以保存，仅实例化资源可以被保存

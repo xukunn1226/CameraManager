@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rigOffset: {x: 1, y: 1.8, z: 0}
   rigOffsetWhenAim: {x: 3, y: 1.8, z: 0}
-  defaultFOV: 58.2
-  defaultPitch: 9.840007
+  defaultFOV: 50
+  defaultPitch: 12
   minPitch: -40
   maxPitch: 70
   defaultYaw: 0
-  defaultDistance: 9.8
+  defaultDistance: 15
   minDistance: 1
   maxDistance: 50

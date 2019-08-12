@@ -15,7 +15,7 @@ MonoBehaviour:
   rigOffset: {x: 0, y: 1.8, z: 0}
   rigOffsetWhenAim: {x: 0, y: 1.8, z: 0}
   defaultFOV: 50
-  defaultPitch: 30
+  defaultPitch: 12
   minPitch: -40
   maxPitch: 70
   defaultYaw: 0

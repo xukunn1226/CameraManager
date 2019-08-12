@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86f24bd2307488243a7723e25274d9ec, type: 3}
   m_Name: CameraViewInfo_Fly
   m_EditorClassIdentifier: 
-  rigOffset: {x: 0, y: 1.8, z: 0}
-  rigOffsetWhenAim: {x: 0, y: 1.8, z: 0}
+  rigOffset: {x: 1, y: 1.8, z: 0}
+  rigOffsetWhenAim: {x: 3, y: 1.8, z: 0}
   defaultFOV: 50
-  defaultPitch: 30
+  defaultPitch: 12
   minPitch: -40
   maxPitch: 70
   defaultYaw: 0
