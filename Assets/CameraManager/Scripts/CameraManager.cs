@@ -110,14 +110,6 @@ namespace Framework
             m_SmoothTime = smoothTime;
         }
 
-        private CameraViewInfo GetViewInfo(CameraViewInfoCollection.CharacterView charView)
-        {
-            if (m_ViewInfoCollection == null)
-                return null;
-
-            return m_ViewInfoCollection[charView];
-        }
-
         /// <summary>
         /// 上层接口，初始化角色默认视角
         /// </summary>
@@ -134,7 +126,7 @@ namespace Framework
             m_ViewInfoCollection = InViewInfoCollection;
             m_ViewTarget = InViewTarget;
 
-            InitViewInfo(m_ViewTarget, GetViewInfo(defaultView));
+            InitViewInfo(m_ViewTarget, m_ViewInfoCollection != null ? m_ViewInfoCollection[defaultView] : null);
         }
         
         /// <summary>
@@ -145,7 +137,7 @@ namespace Framework
         /// <param name="smoothTime"></param>
         public void SetCharacterView(CameraViewInfoCollection.CharacterView charView, bool isAiming = false, float smoothTime = 0.15f)
         {
-            SetPendingViewInfo(m_ViewTarget, GetViewInfo(charView), smoothTime);
+            SetPendingViewInfo(m_ViewTarget, m_ViewInfoCollection != null ? m_ViewInfoCollection[charView] : null, smoothTime);
 
             // procedural view data, inherit current pitch，yaw，distance
             m_PendingVT.m_ViewInfo.pitch = m_CurVT.m_ViewInfo.pitch;
@@ -160,6 +152,9 @@ namespace Framework
         
         private void Update()
         {
+            if (m_CurVT.m_ViewTarget == null)
+                return;
+
             if(!m_isWatching)
             {
                 ProcessInput();
@@ -172,6 +167,9 @@ namespace Framework
 
         void LateUpdate()
         {
+            if (m_CurVT.m_ViewTarget == null)
+                return;
+
             UpdateRigViewInfo();
 
             UpdateCamera();
