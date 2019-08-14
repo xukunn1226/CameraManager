@@ -39,7 +39,7 @@ namespace Framework
         private CameraViewInfo              m_SrcViewInfo;
         private string                      m_ViewInfoAssetPath;
         
-        private CameraEffectInfo            effectProfile;
+        private CameraEffectInfo            m_EffectInfo;
 
         private void OnEnable()
         {
@@ -47,10 +47,10 @@ namespace Framework
 
             RefreshViewInfoProperties();
 
-            cc.GetEffectProfile(out effectProfile);
-            if( effectProfile == null )
+            cc.GetEffectInfo(out m_EffectInfo);
+            if( m_EffectInfo == null )
             {
-                effectProfile = AssetDatabase.LoadAssetAtPath<CameraEffectInfo>(cc.effectProfileAssetPath);
+                m_EffectInfo = AssetDatabase.LoadAssetAtPath<CameraEffectInfo>(cc.effectProfileAssetPath);
             }
         }
 
@@ -203,80 +203,58 @@ namespace Framework
                 }
             }
             EditorGUI.EndDisabledGroup();
-            
-            
 
-            ////////// 编辑相机震屏
-            //GUILayout.Space(30);
-            //EditorGUI.BeginDisabledGroup(!EditorApplication.isPlaying);
-            //{
-            //    GUILayout.Label("编辑相机震屏", EGUIStyles.TitleTextStyle);
 
-            //    ////// CameraEffectProfile
-            //    effectProfile = (CameraEffectInfo)EditorGUILayout.ObjectField("CameraEffect Profile", effectProfile, typeof(CameraEffectInfo), true, GUILayout.ExpandWidth(true));
-            //    EditorGUILayout.LabelField("资源路径：       " + cc.effectProfileAssetPath, GUILayout.ExpandWidth(true));
-            //    if (effectProfile != null)
-            //    {
-            //        // 记录资源地址，方便执行“Save”
-            //        string path = AssetDatabase.GetAssetPath(effectProfile);
-            //        if (!string.IsNullOrEmpty(path))
-            //        {
-            //            cc.effectProfileAssetPath = path;
-            //        }
-            //    }
 
-            //    ////// GO
-            //    EditorGUILayout.Separator();
-            //    if (GUILayout.Button("GO", GUILayout.Height(30)))
-            //    {
-            //        if (effectProfile != null)
-            //        {
-            //            CameraEffectInfo ep;
-            //            cc.GetEffectProfile(out ep);
+            //////// 编辑相机震屏
+            GUILayout.Space(30);
+            EditorGUI.BeginDisabledGroup(!EditorApplication.isPlaying);
+            {
+                GUILayout.Label("编辑相机震屏", EGUIStyles.TitleTextStyle);
 
-            //            if( ep == null || !CanSave(ep) )
-            //            {
-            //                ep = Object.Instantiate<CameraEffectInfo>(effectProfile);
-            //            }
-            //            effectProfile = ep;
+                ////// CameraEffectProfile
+                m_EffectInfo = (CameraEffectInfo)EditorGUILayout.ObjectField("CameraEffectInfo", m_EffectInfo, typeof(CameraEffectInfo), true, GUILayout.ExpandWidth(true));
+                EditorGUILayout.LabelField("资源路径：       " + m_EffectInfo != null ? AssetDatabase.GetAssetPath(m_EffectInfo) : "", GUILayout.ExpandWidth(true));
+                
+                ////// GO
+                EditorGUILayout.Separator();
+                if (GUILayout.Button("GO", GUILayout.Height(30)))
+                {
+                    cc.PlayCameraEffect(m_EffectInfo);
+                }
 
-            //            cc.PlayCameraEffect(effectProfile);
-            //        }
-            //    }
+                //////// SAVE & SAVE AS
+                //EditorGUI.BeginDisabledGroup(!CanSave(m_EffectInfo));
+                //{
+                //    EditorGUILayout.BeginHorizontal();
+                //    if (GUILayout.Button("Save", GUILayout.Width(200)))
+                //    {
+                //        AssetDatabase.CreateAsset(m_EffectInfo, cc.effectProfileAssetPath);
+                //        AssetDatabase.Refresh();
+                //    }
+                //    if (GUILayout.Button("Save as...", GUILayout.Width(200)))
+                //    {
+                //        string savePath = EditorUtility.SaveFilePanel("", cc.effectProfileAssetPath, "CameraEffectProfile", "asset");
+                //        if (!string.IsNullOrEmpty(savePath))
+                //        {
+                //            savePath = savePath.Substring(Application.dataPath.Length - 6);
+                //            AssetDatabase.CreateAsset(m_EffectInfo, savePath);
+                //            AssetDatabase.Refresh();
+                //        }
+                //    }
+                //    EditorGUILayout.EndHorizontal();
+                //}
+                //EditorGUI.EndDisabledGroup();
 
-            //    ////// SAVE & SAVE AS
-            //    EditorGUI.BeginDisabledGroup(!CanSave(effectProfile));
-            //    {
-            //        EditorGUILayout.BeginHorizontal();
-            //        if (GUILayout.Button("Save", GUILayout.Width(200)))
-            //        {
-            //            AssetDatabase.CreateAsset(effectProfile, cc.effectProfileAssetPath);
-            //            AssetDatabase.Refresh();
-            //        }
-            //        if (GUILayout.Button("Save as...", GUILayout.Width(200)))
-            //        {
-            //            string savePath = EditorUtility.SaveFilePanel("", cc.effectProfileAssetPath, "CameraEffectProfile", "asset");
-            //            if (!string.IsNullOrEmpty(savePath))
-            //            {
-            //                savePath = savePath.Substring(Application.dataPath.Length - 6);
-            //                AssetDatabase.CreateAsset(effectProfile, savePath);
-            //                AssetDatabase.Refresh();
-            //            }
-            //        }
-            //        EditorGUILayout.EndHorizontal();
-            //    }
-            //    EditorGUI.EndDisabledGroup();
-
-            //    GUILayout.Space(10);
-            //    GUILayout.Label("当前相机位参数", EGUIStyles.Label2);
-            //    if( effectProfile != null )
-            //    {
-            //        Editor editor = CreateEditor(effectProfile);
-            //        editor.OnInspectorGUI();
-            //    }
-
-            //}
-            //EditorGUI.EndDisabledGroup();
+                GUILayout.Space(10);
+                GUILayout.Label("当前相机震屏参数", EGUIStyles.Label2);
+                if (m_EffectInfo != null)
+                {
+                    Editor editor = CreateEditor(m_EffectInfo);
+                    editor.OnInspectorGUI();
+                }
+            }
+            EditorGUI.EndDisabledGroup();
         }
 
         // 判断资源是否可以保存，仅实例化资源可以被保存

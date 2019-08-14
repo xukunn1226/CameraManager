@@ -508,9 +508,9 @@ namespace Framework
         public bool m_isAiming { get; set; }
 
 
-        public void GetEffectProfile(out CameraEffectInfo profile)
+        public void GetEffectInfo(out CameraEffectInfo info)
         {
-            profile = m_EffectInfo;
+            info = m_EffectInfo;
         }
         public string effectProfileAssetPath { get; set; }
 #endif
