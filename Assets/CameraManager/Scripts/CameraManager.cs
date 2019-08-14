@@ -56,6 +56,7 @@ namespace Framework
 
         private Ray                         m_Ray                               = new Ray();
         private RaycastHit[]                m_Hits                              = new RaycastHit[16];
+        private Vector3                     m_HitPos;
 
         private CameraViewInfoCollection    m_ViewInfoCollection;                                       // 当前的镜头组数据
         private Transform                   m_ViewTarget;                                               // 跟随对象
@@ -245,16 +246,29 @@ namespace Framework
             transform.position = m_CurVT.m_ViewInfo.rig;
             transform.rotation = Quaternion.Euler(m_CurVT.m_ViewInfo.pitch, m_CurVT.m_ViewInfo.yaw, 0);
 
-            main.transform.localPosition = Vector3.forward * CheckCollision() * -1;
+            if(CheckCollision(out m_HitPos))
+            {
+                main.transform.position = m_HitPos;
+            }
+            else
+            {
+                main.transform.localPosition = Vector3.forward * m_CurVT.m_ViewInfo.distance * -1;
+            }
             main.fieldOfView = m_CurVT.m_ViewInfo.fov;
         }
 
-        private float CheckCollision()
+        private bool CheckCollision(out Vector3 hitPos)
         {
-            m_Ray.origin = transform.position;
-            m_Ray.direction = -transform.forward;
+            Vector3 dummyCamera = transform.position - transform.forward * m_CurVT.m_ViewInfo.distance;
+            m_Ray.origin = new Vector3(m_CurVT.m_ViewTarget.position.x, m_CurVT.m_ViewTarget.position.y + m_CurVT.m_ViewInfo.rigOffset.y, m_CurVT.m_ViewTarget.position.z);
+            m_Ray.direction = (dummyCamera - m_Ray.origin).normalized;
 
             int count = Physics.SphereCastNonAlloc(m_Ray, m_SphereCastRadius, m_Hits, m_CurVT.m_ViewInfo.distance, m_CollisionMask, QueryTriggerInteraction.Ignore);
+            if (count == 0)
+            {
+                hitPos = Vector3.zero;
+                return false;
+            }
 
             float nearest = Mathf.Infinity;
             int index = -1;
@@ -267,7 +281,8 @@ namespace Framework
                 }
             }
 
-            return index != -1 ? m_Hits[index].distance : m_CurVT.m_ViewInfo.distance;
+            hitPos = m_Hits[index].point - m_Ray.direction * m_SphereCastRadius;
+            return true;
         }
 
         private void UpdateCameraEffect()
