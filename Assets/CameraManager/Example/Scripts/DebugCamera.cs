@@ -72,6 +72,16 @@ public class DebugCamera : MonoBehaviour
         }
     }
 
+    void OnDrawGizmosSelected()
+    {
+        if (m_Player.transform != null)
+        {
+            // Draws a blue line from this transform to the target
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(CameraManager.instance.transform.position, m_Player.transform.position);
+        }
+    }
+
     private void OnGUI()
     {
         if(GUI.Button(new Rect(Screen.width - 240, 100, 80, 80), "Watching"))
@@ -86,7 +96,19 @@ public class DebugCamera : MonoBehaviour
             m_isAiming = !m_isAiming;
             Debug.LogFormat("m_isAiming: {0}", m_isAiming);
         }
+
+        DrawPoint(CameraManager.instance.main.transform.position + CameraManager.instance.direction * 100, Color.green);
+        DrawPoint(CameraManager.instance.main.transform.position + CameraManager.instance.direction * 100 + CameraManager.instance.main.transform.up * 1.5f, Color.red);
     }
+
+    void DrawPoint(Vector3 worldPos, Color clr)
+    {
+        Vector3 screenPos = CameraManager.instance.WorldToScreenPoint(worldPos);
+        screenPos.y = Screen.height - screenPos.y;
+        GUI.color = clr;
+        GUI.Button(new Rect(screenPos.x - 1, screenPos.y - 1, 2, 2), "");
+    }
+
     private void LateUpdate()
     {
         if(Input.GetKeyDown(KeyCode.Alpha1))
