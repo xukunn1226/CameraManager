@@ -9,6 +9,8 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Mm]emoryCaptures/
+/lfs/
+/hooks/
 
 # Never ignore Asset meta data
 !/[Aa]ssets/**/*.meta
@@ -24,6 +26,10 @@
 
 # Visual Studio cache directory
 .vs/
+
+# Visual Studio Code cache directory
+.vscode/
+.vsconfig
 
 # Gradle cache directory
 .gradle/
@@ -45,6 +51,7 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
+*.code-workspace
 
 # Unity3D generated meta files
 *.pidb.meta
@@ -56,7 +63,52 @@ sysinfo.txt
 
 # Builds
 *.apk
+*.unitypackage
 
 # Crashlytics generated file
 crashlytics-build.properties
+
+# StreamingAssets
+[Aa]ssets/StreamingAssets
+[Aa]ssets/StreamingAssets.meta
+
+
+# Customize
+Deployment/
+UserSettings/
+[Aa]ssets/**/[Tt]emp/
+[Aa]ssets/**/[Tt]emp.meta
+[Aa]ssets/Application/MeshParticleSystem/ParticleProfiler/ProfilerData
+[Aa]ssets/Application/MeshParticleSystem/ParticleProfiler/ProfilerData.meta
+!Assets/Framework/AssetManagement/Deployment/
+[Aa]ssets/RedirectorCache
+[Aa]ssets/RedirectorCache.meta
+[Aa]ssets/Application/XLua/Gen
+[Aa]ssets/Application/XLua/Gen.meta
+
+
+# some plugins
+[Aa]ssets/AssetBundles-Browser-master
+[Aa]ssets/AssetBundles-Browser-master.meta
+[Aa]ssets/AssetUsageDetector
+[Aa]ssets/AssetUsageDetector.meta
+[Aa]ssets/BuildReports
+[Aa]ssets/BuildReports.meta
+
+
+# some native plugin projects
+*vcxproj.filters
+*vcxproj.user
+TestNative/Release
+TestNative/Debug
+TestNative/x64
+
+
+
+
+
+
+
+
+
 
